@@ -47,9 +47,9 @@ jobs:
         run: yarn --frozen-lockfile
 
       - name: Build
-        run: |
-          API_ENDPOINT=${{ secrets.SYSTEM_DOMAIN }}
-          yarn build
+        run: yarn build
+        env:
+          API_ENDPOINT: ${{ secrets.SYSTEM_URL }}
 
       - name: Compress repo to Tar
         uses: a7ul/tar-action@v1.1.0
