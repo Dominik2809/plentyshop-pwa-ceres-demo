@@ -9,8 +9,8 @@ export const useSdk = createSharedComposable(() => {
 
   const sdkConfig = {
     plentysystems: buildModule<PlentysystemsModuleType>(plentysystemsModule, {
-      apiUrl: process.env.apiEndpoint
-        ? `${process.env.apiEndpoint}/plentysystems`
+       apiUrl: config.public.apiEndpoint
+        ? `${config.public.apiEndpoint}/plentysystems`
         : 'http://localhost:8181/plentysystems',
     }),
   };
