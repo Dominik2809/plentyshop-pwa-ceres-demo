@@ -48,8 +48,8 @@ jobs:
 
       - name: Setup environment
         run: |
-          touch .env
-          echo API_ENDPOINT=${{ secrets.SYSTEM_DOMAIN }} >> .env
+          touch apps/web/.env
+          echo API_ENDPOINT=${{ secrets.SYSTEM_DOMAIN }} >> apps/web/.env
 
       - name: Build
         run: yarn build
