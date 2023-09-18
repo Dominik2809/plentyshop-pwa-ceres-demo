@@ -102,8 +102,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      cookieGroups: cookieConfig,
-      apiEndpoint: process.env.API_ENDPOINT
+      cookieGroups: cookieConfig
     },
   },
   pwa: {

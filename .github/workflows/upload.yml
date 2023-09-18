@@ -46,10 +46,13 @@ jobs:
       - name: Install Dependencies
         run: yarn --frozen-lockfile
 
+      - name: Setup environment
+        run: |
+          touch .env
+          echo API_ENDPOINT=${{ secrets.SYSTEM_URL }} >> .env
+
       - name: Build
         run: yarn build
-        env:
-          API_ENDPOINT: ${{ secrets.SYSTEM_URL }}
 
       - name: Compress repo to Tar
         uses: a7ul/tar-action@v1.1.0
