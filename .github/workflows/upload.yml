@@ -46,10 +46,10 @@ jobs:
       - name: Install Dependencies
         run: yarn --frozen-lockfile
 
-      - name: Setup environment
-        run: |
-          touch apps/web/.env
-          echo API_ENDPOINT=${{ secrets.SYSTEM_DOMAIN }} >> apps/web/.env
+      # - name: Setup environment
+      #   run: |
+      #     touch apps/web/.env
+      #     echo API_ENDPOINT=${{ secrets.SYSTEM_DOMAIN }} >> apps/web/.env
 
       - name: Build
         run: yarn build
