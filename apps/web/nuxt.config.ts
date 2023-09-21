@@ -2,7 +2,7 @@
 import cookieConfig from './cookie.config';
 
 export default defineNuxtConfig({
-  ssr: false,
+  ssr: true,
   devtools: { enabled: true },
   typescript: {
     typeCheck: true,
