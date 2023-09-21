@@ -2,6 +2,9 @@
 import cookieConfig from './cookie.config';
 
 export default defineNuxtConfig({
+  experimental: {
+    renderJsonPayloads: false
+  },
   ssr: true,
   devtools: { enabled: true },
   typescript: {
