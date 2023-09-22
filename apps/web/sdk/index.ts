@@ -5,7 +5,7 @@ import { createSharedComposable } from '@vueuse/core';
 export const useSdk = createSharedComposable(() => {
   const sdkConfig = {
     plentysystems: buildModule<PlentysystemsModuleType>(plentysystemsModule, {
-      apiUrl: 'https://ceres-demo.plentymarkets-cloud01.com/plentysystems',
+      apiUrl: 'http://localhost:8181/plentysystems',
     }),
   };
 
