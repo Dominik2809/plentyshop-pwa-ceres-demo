@@ -7,7 +7,7 @@ const config = {
       location: '@plentymarkets/shop-api/server',
       configuration: {
         api: {
-          url: 'https://ceres-demo.plentymarkets-cloud01.com/'
+          url: 'https://ceres-demo.plentymarkets-cloud01.com'
         }
       },
     }

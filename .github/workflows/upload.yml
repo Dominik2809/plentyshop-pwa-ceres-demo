@@ -16,6 +16,8 @@ permissions:
 jobs:
   install-and-build-dependencies:
     runs-on: ubuntu-latest
+    env:
+      NUXT_PUBLIC_API_URL: https://ceres-demo.plentymarkets-cloud01.com
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
