@@ -7,7 +7,7 @@ const config = {
       location: '@plentymarkets/shop-api/server',
       configuration: {
         api: {
-          url: 'https://ceres-demo.plentymarkets-cloud01.com'
+          url: process.env.API_ENDPOINT ? `${process.env.API_ENDPOINT}` : 'https://mevofvd5omld.c01-14.plentymarkets.com'
         }
       },
     }
