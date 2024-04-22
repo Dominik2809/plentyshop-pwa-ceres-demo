@@ -8,15 +8,7 @@
     </div>
 
     <div v-if="selectedAddress" class="mt-2 md:w-[520px]">
-      <p>
-        {{ `${userAddressGetters.getFirstName(selectedAddress)} ${userAddressGetters.getLastName(selectedAddress)}` }}
-      </p>
-      <p>{{ userAddressGetters.getPhone(selectedAddress) }}</p>
-      <p>
-        {{ userAddressGetters.getStreetName(selectedAddress) }}
-        {{ userAddressGetters.getStreetNumber(selectedAddress) }}
-      </p>
-      <p>{{ `${userAddressGetters.getCity(selectedAddress)} ${userAddressGetters.getPostCode(selectedAddress)}` }}</p>
+      <AddressDisplay :address="selectedAddress" />
     </div>
 
     <div class="w-full md:max-w-[520px]" v-if="!disabled && (isAuthorized || addresses.length === 0)">
@@ -54,25 +46,38 @@
     </UiModal>
   </div>
 </template>
-<script lang="ts" setup>
-import { Address, AddressType } from '@plentymarkets/shop-api';
-import { userAddressGetters } from '@plentymarkets/shop-sdk';
+<script setup lang="ts">
+import { type Address, AddressType } from '@plentymarkets/shop-api';
+import { cartGetters, userAddressGetters } from '@plentymarkets/shop-sdk';
 import { SfButton, SfIconClose, useDisclosure } from '@storefront-ui/vue';
-import type { CheckoutAddressProps } from './types';
+import type { CheckoutAddressProps } from '~/components/CheckoutAddress/types';
 
 const { isOpen, open, close } = useDisclosure();
 const { isAuthorized } = useCustomer();
 const { saveAddress: saveBillingAddress } = useAddress(AddressType.Billing);
 const { saveAddress: saveShippingAddress } = useAddress(AddressType.Shipping);
 const { data: activeShippingCountries, getActiveShippingCountries } = useActiveShippingCountries();
-await getActiveShippingCountries();
-
 const props = withDefaults(defineProps<CheckoutAddressProps>(), {
   disabled: false,
 });
+const { data: cart } = useCart();
 const editMode = ref(false);
-const selectedAddress = computed(() => props.addresses?.[0] ?? ({} as Address));
+
+const cartAddress = computed(() =>
+  props.type === AddressType.Billing
+    ? cartGetters.getCustomerInvoiceAddressId(cart.value)
+    : cartGetters.getCustomerShippingAddressId(cart.value),
+);
+
+const selectedAddress = computed(
+  () =>
+    props.addresses.find((address) => userAddressGetters.getId(address) === cartAddress?.value?.toString()) ??
+    ({} as Address),
+);
+
 const emit = defineEmits(['on-saved']);
+
+getActiveShippingCountries();
 
 const create = () => {
   editMode.value = false;

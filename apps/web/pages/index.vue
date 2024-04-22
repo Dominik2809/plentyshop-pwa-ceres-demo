@@ -1,36 +1,38 @@
 <template>
   <div class="relative min-h-[600px]">
     <picture>
-      <source
-        srcset="https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/hero-bg.png"
-        media="(min-width: 768px)"
-      />
+      <source srcset="/images/homepage-hero-bg.webp" media="(min-width: 768px)" />
       <img
-        src="https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/hero-bg-mobile.png"
+        src="/images/homepage-hero-bg-mobile.webp"
+        height="600"
+        width="4000"
+        alt="Hero mobile background"
         class="absolute w-full h-full z-[-1] md:object-cover"
       />
     </picture>
     <div class="md:flex md:flex-row-reverse md:justify-center max-w[1536px] mx-auto md:min-h-[600px]">
       <div class="flex flex-col md:basis-2/4 md:items-stretch md:overflow-hidden">
         <img
-          src="https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/hero-headphones.png"
+          src="/images/homepage-hero-headphones.webp"
+          height="600"
+          width="800"
           alt="Headphones"
           class="h-full object-cover object-left"
         />
       </div>
       <div class="p-4 md:p-10 md:max-w-[768px] md:flex md:flex-col md:justify-center md:items-start md:basis-2/4">
         <p class="typography-text-xs md:typography-text-sm font-bold tracking-widest text-neutral-500 uppercase">
-          Feel the music
+          {{ $t('homepage.banner.moto1') }}
         </p>
         <h1 class="typography-display-2 md:typography-display-1 md:leading-[67.5px] font-bold mt-2 mb-4">
-          New Wireless Pro
+          {{ t('homepage.banner.moto2') }}
         </h1>
         <p class="typography-text-base md:typography-text-lg">
-          Spatial audio. Adjustable ear cups. On-device controls. All-day battery.
+          {{ t('homepage.banner.moto3') }}
         </p>
         <div class="flex flex-col md:flex-row gap-4 mt-6">
-          <SfButton size="lg"> Order now </SfButton>
-          <SfButton size="lg" variant="secondary" class="bg-white"> Show more </SfButton>
+          <SfButton size="lg"> {{ t('homepage.banner.orderNow') }}</SfButton>
+          <SfButton size="lg" variant="secondary" class="bg-white"> {{ t('homepage.banner.showMore') }}</SfButton>
         </div>
       </div>
     </div>
@@ -40,26 +42,24 @@
       <div
         v-for="{ title, image } in categories"
         :key="title"
-        class="relative flex-col min-w-[140px] max-w-[240px] justify-center group"
+        role="img"
+        :aria-label="title"
+        :aria-labelledby="`image-${title}`"
+        class="relative flex-col min-w-[140px] max-w-[360px] justify-center group"
       >
-        <a
-          class="absolute w-full h-full z-1 focus-visible:outline focus-visible:outline-offset focus-visible:rounded-md"
-          href="#"
-          :aria-label="title"
-        />
         <img
           class="rounded-full bg-neutral-100 group-hover:shadow-xl group-active:shadow-none"
           :src="image"
           :alt="title"
-          width="240"
-          height="240"
+          width="360"
+          height="360"
         />
-        <div class="flex justify-center">
-          <a
-            class="mt-4 font-semibold no-underline text-normal-900 typography-text-base group-hover:underline group-hover:text-primary-800 group-hover:font-normal group-active:text-primary-800 group-active:font-normal"
+        <div :id="`image-${title}`" class="flex justify-center">
+          <div
+            class="mt-4 font-semibold no-underline text-normal-900 typography-text-base group-hover:text-primary-800 group-hover:font-normal group-active:text-primary-800 group-active:font-normal"
           >
             {{ title }}
-          </a>
+          </div>
         </div>
       </div>
     </div>
@@ -104,37 +104,49 @@
         </div>
       </div>
     </div>
-    <section class="mx-4 mt-28 mb-20 overflow-hidden">
-      <NuxtLazyHydrate when-visible>
-        <p data-testid="recommended-products" v-if="recommendedProducts" class="my-4 typography-text-lg">
+    <NuxtLazyHydrate when-visible>
+      <NewsletterSubscribe />
+    </NuxtLazyHydrate>
+    <NuxtLazyHydrate when-visible>
+      <section class="mx-4 mt-28 mb-20 overflow-hidden">
+        <p data-testid="recommended-products" class="my-4 typography-text-lg">
           {{ $t('moreItemsOfThisCategory') }}
         </p>
-        <RecommendedProducts v-if="recommendedProducts" :products="recommendedProducts" />
-      </NuxtLazyHydrate>
-    </section>
+        <ProductRecommendedProducts cache-key="homepage" :category-id="recommendedProductsCategoryId" />
+      </section>
+    </NuxtLazyHydrate>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { SfButton } from '@storefront-ui/vue';
+const { t } = useI18n();
+definePageMeta({
+  pageType: 'static',
+});
 
 const { data: categoryTree } = useCategoryTree();
-const { data: recommendedProducts, fetchProductRecommended } = useProductRecommended('homepage');
-const firstCategoryId = categoryTree.value?.[0]?.id;
+const recommendedProductsCategoryId = ref('');
 
-onMounted(async () => {
-  if (firstCategoryId) {
-    await fetchProductRecommended(firstCategoryId.toString());
-  }
-});
+watch(
+  () => categoryTree.value,
+  async () => {
+    const firstCategoryId = categoryTree.value?.[0]?.id;
+
+    if (firstCategoryId) {
+      recommendedProductsCategoryId.value = firstCategoryId.toString();
+    }
+  },
+  { immediate: true },
+);
 
 const displayDetails = [
   {
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/display.png',
-    title: 'Sunny Days Ahead',
-    subtitle: 'Be inspired',
-    description: 'Step out in style with our sunglasses collection',
-    buttonText: 'Discover now',
+    image: '/images/homepage-display-1.webp',
+    title: t('homepage.displayDetails.detail1.title'),
+    subtitle: t('homepage.displayDetails.detail1.subtitle'),
+    description: t('homepage.displayDetails.detail1.description'),
+    buttonText: t('homepage.displayDetails.detail1.buttonText'),
     reverse: false,
     backgroundColor: 'bg-negative-200',
     titleClass: 'md:typography-display-2',
@@ -142,20 +154,20 @@ const displayDetails = [
     descriptionClass: 'md:typography-text-lg',
   },
   {
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/display-2.png',
-    title: 'Pack it Up',
-    subtitle: 'Be active',
-    description: 'Explore the great outdoors with our backpacks',
-    buttonText: 'Discover now',
+    image: '/images/homepage-display-2.webp',
+    title: t('homepage.displayDetails.detail2.title'),
+    subtitle: t('homepage.displayDetails.detail2.subtitle'),
+    description: t('homepage.displayDetails.detail2.description'),
+    buttonText: t('homepage.displayDetails.detail2.buttonText'),
     reverse: true,
     backgroundColor: 'bg-warning-200',
   },
   {
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/display-3.png',
-    title: 'Fresh and Bold',
-    subtitle: 'New collection',
-    description: 'Add a pop up color to your outfit',
-    buttonText: 'Discover now',
+    image: '/images/homepage-display-3.webp',
+    title: t('homepage.displayDetails.detail3.title'),
+    subtitle: t('homepage.displayDetails.detail3.subtitle'),
+    description: t('homepage.displayDetails.detail3.description'),
+    buttonText: t('homepage.displayDetails.detail3.buttonText'),
     reverse: false,
     backgroundColor: 'bg-secondary-200',
   },
@@ -163,16 +175,16 @@ const displayDetails = [
 
 const categories = [
   {
-    title: `Women`,
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/women_category.png',
+    title: t('homepage.women'),
+    image: '/images/homepage-women-category.webp',
   },
   {
-    title: `Men`,
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/men_category.png',
+    title: t('homepage.men'),
+    image: '/images/homepage-men-category.webp',
   },
   {
-    title: `Kid`,
-    image: 'https://storage.googleapis.com/sfui_docs_artifacts_bucket_public/production/kid_category.png',
+    title: t('homepage.kid'),
+    image: '/images/homepage-kid-category.webp',
   },
 ];
 </script>

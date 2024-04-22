@@ -1,6 +1,6 @@
-const productsAmount = 24;
+import { PageObject } from "./PageObject";
 
-export class ProductListPageObject {
+export class ProductListPageObject extends PageObject {
   get categoryGrid() {
     return cy.getByTestId('category-grid');
   }
@@ -70,12 +70,14 @@ export class ProductListPageObject {
   }
 
   addToCart() {
-    this.products.first().find(`[data-testid="button"]`).click();
+    this.products.find(`[data-testid="add-to-basket-short"]`).first().click();
     return this;
   }
 
   goToProduct() {
-    this.products.first().click()
+    cy.intercept('/plentysystems/getProduct').as('getProduct');
+    this.products.first().click();
+    cy.wait('@getProduct');
 
     return this
   }

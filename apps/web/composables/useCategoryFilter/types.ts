@@ -1,4 +1,4 @@
-import { FacetSearchCriteria } from '@plentymarkets/shop-api';
+import type { FacetSearchCriteria } from '@plentymarkets/shop-api';
 
 export interface GetFacetsFromURLResponse extends FacetSearchCriteria {
   term?: string;
@@ -17,4 +17,6 @@ export interface UseCategoryFiltersResponse {
   updateSearchTerm(term: string): void;
   updateSorting(sort: string): void;
   updatePage(page: string): void;
+  updateQuery(parameter?: object): void;
+  checkFiltersInURL(): void;
 }

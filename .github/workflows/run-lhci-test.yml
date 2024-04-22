@@ -1,10 +1,6 @@
 name: Testing (Lighthouse CI)
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - 'apps/web/**'
-      - 'lighthouserc.json'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,7 +13,10 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
 
       - name: Setup node
         uses: actions/setup-node@v3
@@ -29,7 +28,7 @@ jobs:
       - name: Set yarn version
         run: |
           yarn set version stable
-          yarn set version 3.6.3
+          yarn set version 3.6.4
 
       - name: Setup .yarnrc.yml
         run: |
@@ -39,6 +38,11 @@ jobs:
             yarn config set npmScopes.plentymarkets.npmAuthToken $NODE_AUTH_TOKEN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup middleware env
+        run: |
+            touch apps/web/.env
+            echo API_ENDPOINT=https://mevofvd5omld.c01-14.plentymarkets.com >> apps/web/.env
 
       - name: Install Dependencies
         run: yarn --frozen-lockfile

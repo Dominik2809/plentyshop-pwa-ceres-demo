@@ -1,14 +1,16 @@
-import { ReviewAverage } from '@plentymarkets/shop-api';
+import type { ReviewAverage } from '@plentymarkets/shop-api';
 import { toRefs } from '@vueuse/shared';
 import { useSdk } from '~/sdk';
-import { FetchProductReviewAverage, UseProductReviewAverage, UseProductReviewAverageState } from './types';
+import type { FetchProductReviewAverage, UseProductReviewAverage, UseProductReviewAverageState } from './types';
 
 /**
  * @description Composable managing review average data
- * @returns {@link UseProductReviewsAverageReturn}
- * @example
- * const { data, loading, fetchProductReviewAverage } = useProductReviewAverage(itemId);
  * @param itemId
+ * @returns UseProductReviewsAverageReturn
+ * @example
+ * ``` ts
+ * const { data, loading, fetchProductReviewAverage } = useProductReviewAverage(itemId);
+ * ```
  */
 export const useProductReviewAverage: UseProductReviewAverage = (itemId: string) => {
   const state = useState<UseProductReviewAverageState>(`useProductReviewAverage-${itemId}`, () => ({
@@ -17,8 +19,12 @@ export const useProductReviewAverage: UseProductReviewAverage = (itemId: string)
   }));
 
   /** Function for fetching product reviews data
+   * @param itemId
+   * @return FetchProductReviewAverage
    * @example
-   * fetchProductReviewAverage(itemId);
+   * ``` ts
+   * fetchProductReviewAverage(1);
+   * ```
    */
   const fetchProductReviewAverage: FetchProductReviewAverage = async (itemId: number) => {
     state.value.loading = true;

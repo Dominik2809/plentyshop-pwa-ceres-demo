@@ -1,19 +1,32 @@
-import { CookieRef } from 'nuxt/app';
-import { Cookie, CookieGroup, CookieGroupFromNuxtConfig } from 'cookie.config';
-import { UseCookieReturn } from './types';
+import type { CookieRef } from 'nuxt/app';
+import type { Cookie, CookieGroup, CookieGroupFromNuxtConfig } from '~/cookie.config';
+import type { UseCookieReturn } from './types';
 
 const checkIfScriptIsExternal = (scriptName: string): boolean => {
   return scriptName.startsWith('http');
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertToSaveableJson(jsonList: any): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return jsonList.map((group: any) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [group.name]: group.cookies.map((cookie: any) => ({
       [cookie.name]: cookie.accepted,
     })),
   }));
 }
 
+/**
+ * @description Composable for managing cookie bar.
+ * @returns UseCookieReturn
+ * @example
+ * ``` ts
+ * const {
+ * cookieJson, bannerIsHidden, setHiddenState, convertAndSaveCookies, loadThirdPartyScripts, defaultCheckboxIndex
+ * } = useCookieBar(consentCookie, initCheckboxIndex, initialCookieJsonFromConfig);
+ * ```
+ */
 /* eslint-disable sonarjs/cognitive-complexity */
 export const useCookieBar = (
   consentCookie: CookieRef<CookieGroup[]>,
@@ -38,10 +51,27 @@ export const useCookieBar = (
   );
   const existingCookieInMemory = consentCookie;
 
+  /**
+   * @description Function for setting the hidden state for the banner.
+   * @param state
+   * @return void
+   * @example
+   * ``` ts
+   * setHiddenState(true);
+   * ```
+   */
   function setHiddenState(state: boolean): void {
     bannerIsHidden.value = state;
   }
 
+  /**
+   * @description Function for loading third party scripts.
+   * @return void
+   * @example
+   * ``` ts
+   * loadThirdPartyScripts();
+   * ```
+   */
   function loadThirdPartyScripts(): void {
     if (!process.server) {
       cookieJson.value.forEach((cookieGroup, groupIndex) => {
@@ -78,7 +108,17 @@ export const useCookieBar = (
     }
   }
 
-  function convertAndSaveCookies(setAllCookies: boolean, latestStatus: boolean): any {
+  /**
+   * @description Function for saving the cookies.
+   * @param setAllCookies
+   * @param latestStatus
+   * @return string
+   * @example
+   * ``` ts
+   * convertAndSaveCookies(true, true);
+   * ```
+   */
+  function convertAndSaveCookies(setAllCookies: boolean, latestStatus: boolean): string {
     if (setAllCookies) {
       // accept all or reject all case (update cookieJson and checkboxes from ui)
       cookieJson.value.forEach((group, index) => {

@@ -1,37 +1,54 @@
-import { Address, AddressType } from '@plentymarkets/shop-api';
+import { type Address, AddressType } from '@plentymarkets/shop-api';
 import { userAddressGetters } from '@plentymarkets/shop-sdk';
 import { toRefs } from '@vueuse/shared';
-import { DeleteAddress, SetDefault } from '~/composables/useAddress/types';
+import type { DeleteAddress, SetDefault } from '~/composables/useAddress/types';
 import { useSdk } from '~/sdk';
-import { UseAddressReturn, GetAddresses, SaveAddress, UseAddressMethodsState } from './types';
+import type { UseAddressReturn, GetAddresses, SaveAddress, UseAddressMethodsState } from './types';
 
 /**
- * @description Composable for getting  addresses from the current user session.
- * @param type {@link AddressType}
+ * @description Composable for working with addresses in the current user session.
+ * The composable covers two types of addresses, billing and shipping.
+ * @param {@link AddressType}
  * @example
+ * This example uses the address type `Billing`. All examples are equivalent for addresses of type `Shipping`.
+ * ``` ts
  * const {
- * data, loading,
- * getAddresses, defaultAddressId,
- * saveAddress, deleteAddress,
- * setDefault } = useAddress(AddressType.Billing);
- *
- * const { data, loading,
- * getAddresses, defaultAddressId,
- * saveAddress, deleteAddress,
- * setDefault } = useAddress(AddressType.Shipping);
+ *  data,
+ *  loading,
+ *  defaultAddressId,
+ *  savedAddress,
+ *  getAddresses,
+ *  saveAddress,
+ *  deleteAddress,
+ *  setDefault
+ * } = useAddress(AddressType.Billing);
+ * let address: Address;
+ * let id: Number;
+ * getAddresses();
+ * saveAddress(address);
+ * deleteAddress(id);
+ * setDefault(id);
+ * ```
+ * - `getAddresses` gets all addresses of the address type passed to `useAddress`.
+ * Updates `defaultAddressId` to the current default address.
+ * - `saveAddress` saves the given address with the address type passed to `useAddress`.
+ * If successful, it returns the `savedAddress`.
+ * After saving the address, updates the list of addresses.
+ * - `deleteAddress` deletes the address of the address type passed to `useAddress` with the given ID.
+ * After deleting the address, updates the list of addresses.
+ * - `setDefault` updates the `defaultAddressId` of the type passed to `useAddress` with the given ID.
+ * After setting the default, updates the list of addresses.
  */
 
 export const useAddress: UseAddressReturn = (type: AddressType) => {
   const state = useState<UseAddressMethodsState>(`useAddress-${type}`, () => ({
     data: [] as Address[],
+    useAsShippingAddress: true,
     savedAddress: {} as Address,
     loading: false,
     defaultAddressId: 0,
   }));
 
-  /**
-   * @description Get the default address.
-   */
   const getDefaultAddress = (): void => {
     state.value.loading = true;
 
@@ -48,11 +65,6 @@ export const useAddress: UseAddressReturn = (type: AddressType) => {
     state.value.loading = false;
   };
 
-  /**
-   * @description Function for fetching addresses based on type.
-   * @example
-   * getAddresses();
-   */
   const getAddresses: GetAddresses = async () => {
     state.value.loading = true;
     const { data, error } = await useAsyncData(type.toString(), () =>
@@ -69,10 +81,6 @@ export const useAddress: UseAddressReturn = (type: AddressType) => {
     return state.value.data;
   };
 
-  /**
-   * @description Save an address.
-   * @param address
-   */
   const saveAddress: SaveAddress = async (address: Address) => {
     state.value.loading = true;
     const { data, error } = await useAsyncData(type.toString(), () =>
@@ -89,15 +97,11 @@ export const useAddress: UseAddressReturn = (type: AddressType) => {
     return state.value.savedAddress;
   };
 
-  /**
-   * @description Set the default address.
-   * @param addressId
-   */
-  const setDefault: SetDefault = async (addressId: number) => {
+  const setDefault: SetDefault = async (address: Address) => {
     state.value.loading = true;
-    await useSdk().plentysystems.setAddressAsDefault({
+    await useSdk().plentysystems.doSaveAddress({
       typeId: type,
-      addressId: addressId,
+      addressData: address,
     });
 
     state.value.loading = false;
@@ -105,10 +109,6 @@ export const useAddress: UseAddressReturn = (type: AddressType) => {
     await getAddresses();
   };
 
-  /**
-   * @description Delete an address.
-   * @param addressId
-   */
   const deleteAddress: DeleteAddress = async (addressId: number) => {
     state.value.loading = true;
     await useSdk().plentysystems.deleteAddress({

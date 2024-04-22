@@ -5,7 +5,12 @@
     </h6>
 
     <div class="px-4">
-      <SfSelect v-model="selected" :aria-label="$t('perPage')" @change="updateItemsPerPage(Number(selected))">
+      <SfSelect
+        v-model="selected"
+        :aria-label="$t('perPage')"
+        id="perPage"
+        @change="updateItemsPerPage(Number(selected))"
+      >
         <option v-for="{ value, label, disabled } in options" :key="value" :value="value" :disabled="disabled">
           {{ label }}
         </option>
@@ -16,7 +21,7 @@
 
 <script setup lang="ts">
 import { SfSelect } from '@storefront-ui/vue';
-import { CategoryItemsPerPageProps, Option } from '~/components/CategoryItemsPerPage/types';
+import type { CategoryItemsPerPageProps, Option } from '~/components/CategoryItemsPerPage/types';
 import { defaults } from '~/composables';
 
 const props = defineProps<CategoryItemsPerPageProps>();

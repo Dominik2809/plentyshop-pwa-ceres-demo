@@ -1,4 +1,6 @@
-export class CheckoutPageObject {
+import { PageObject } from "./PageObject";
+
+export class CheckoutPageObject extends PageObject {
   get goToCheckoutButton() {
     return cy.getByTestId('checkout-button');
   }
@@ -28,11 +30,11 @@ export class CheckoutPageObject {
   }
 
   get placeOrderButtons() {
-    return cy.getByTestId('place-order-button')
+    return cy.getByTestId('place-order-button');
   }
 
   get displaySuccessPages() {
-    return cy.getByTestId('order-success-page');
+    return cy.get('[data-testid="order-success-page"]', { timeout: 60000 });
   }
 
   get inputField() {
@@ -45,6 +47,10 @@ export class CheckoutPageObject {
 
   get thankYouBanner() {
     return cy.getByTestId('success-header');
+  }
+
+  get orderPaymentStatus() {
+    return cy.getByTestId('order-payment-status');
   }
 
   get firstNameInput() {
@@ -121,8 +127,13 @@ export class CheckoutPageObject {
     return this;
   }
 
+  displayFullyPaid() {
+    this.orderPaymentStatus.contains('fullyPaid');
+    return this;
+  }
+
   fillContactInformationForm() {
-    cy.getFixture('addressForm').then((fixture) => {
+    cy.getFixture('addressForm').then(() => {
       const uniqueEmail = `test-order-${new Date().getTime()}@plentymarkets.com`;
       this.contactInformationForm.type(uniqueEmail);
       this.contactInformationFormSaveButton.click().should('not.exist');
@@ -138,6 +149,29 @@ export class CheckoutPageObject {
 
   fillBillingAddressForm() {
     return this.fillAddressForm();
+  }
+
+  fillCreditCardForm() {
+    cy.iframe('#braintree-hosted-field-number').find('#credit-card-number').type('4868719460707704');
+
+    cy.iframe('#braintree-hosted-field-expirationDate').find('.expirationDate').type('12/27');
+
+    cy.iframe('#braintree-hosted-field-cvv').find('.cvv').type('123');
+
+    cy.get('#credit-card-name').focus().type('John Doe');
+    return this;
+  }
+
+  payCreditCard() {
+    cy.getByTestId('pay-creditcard-button').click();
+    return this;
+  }
+
+  checkCreditCard() {
+    cy.intercept('/plentysystems/setPaymentProvider').as('setPaymentProvider')
+    cy.getByTestId('payment-method-6008').check({ force: true });
+    cy.wait('@setPaymentProvider');
+    return this;
   }
 
   fillShippingAddressForm() {
@@ -161,7 +195,7 @@ export class CheckoutPageObject {
     this.cityInput.type(fixture.city);
     // this.stateSelect.select(fixture.state);
     this.postalCodeInput.type(fixture.zipCode);
-    this.modalSaveButton.click({force: true});
+    this.modalSaveButton.click({ force: true });
     return this;
   }
 }

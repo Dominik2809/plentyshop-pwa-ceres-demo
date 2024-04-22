@@ -1,12 +1,15 @@
-import { UseNotificationState, UseNotificationReturn, Notification } from './types';
+import type { UseNotificationState, UseNotificationReturn, Notification } from './types';
 
 const maxVisibleNotifications = 5;
-const timeToLive = 3000;
+const dismissTimeout = 3000;
 
 /**
  * @description Composable to display ui notifications
+ * @return UseNotificationReturn
  * @example
- * const { send } = useNotification();
+ * ``` ts
+ * const { data, send } = useNotification();
+ * ```
  */
 export const useNotification: UseNotificationReturn = () => {
   const state = useState<UseNotificationState>(`useNotification`, () => ({
@@ -15,16 +18,19 @@ export const useNotification: UseNotificationReturn = () => {
 
   /**
    * @description method to display a ui notification
+   * @param notification { Notification }
    * @example
+   * ``` ts
    *  send({
-        message: 'Test alert error with a longer message',
-        type: 'negative',
-        persist: true,
-        action: {
-          text: 'action',
-          onClick: () => {},
-        },
-      });
+   *     message: 'Test alert error with a longer message',
+   *     type: 'negative',
+   *    persist: true,
+   *     action: {
+   *       text: 'action',
+   *       onClick: () => {},
+   *    },
+   *  });
+   * ```
    */
   const send = (notification: Notification) => {
     const id = Symbol();
@@ -35,22 +41,27 @@ export const useNotification: UseNotificationReturn = () => {
       if (index !== -1) state.value.data.splice(index, 1);
     };
 
-    const dismissableNotification = {
+    const dismissibleNotification = {
       ...notification,
       id,
       dismiss,
     };
 
-    state.value.data.push(dismissableNotification);
+    state.value.data.push(dismissibleNotification);
     if (state.value.data.length > maxVisibleNotifications) state.value.data.shift();
 
     if (!notification.persist && notification.type !== 'negative') {
-      setTimeout(dismiss, timeToLive);
+      setTimeout(dismiss, notification.dismissTimeout || dismissTimeout);
     }
+  };
+
+  const clear = () => {
+    state.value.data = [];
   };
 
   return {
     send,
+    clear,
     ...toRefs(state.value),
   };
 };

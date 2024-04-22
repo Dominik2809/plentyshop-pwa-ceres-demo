@@ -1,4 +1,4 @@
-import { Order, PaginatedResult } from '@plentymarkets/shop-api';
+import type { Order, PaginatedResult, UseUserOrderSearchParams } from '@plentymarkets/shop-api';
 import { toRefs } from '@vueuse/shared';
 import type {
   UseCustomerReturnsReturn,
@@ -6,24 +6,34 @@ import type {
   FetchCustomerReturns,
 } from '~/composables/useCustomerReturns/types';
 import { useSdk } from '~/sdk';
+import type { OrderReturnsResponse } from '@plentymarkets/shop-api';
 
 /**
- * @description Composable managing returns data
- * @returns {@link UseCustomerReturnsReturn}
+ * @description Composable managing order returns data
+ * @returns UseCustomerReturnsReturn
  * @example
+ * ``` ts
  * const { data, loading, fetchCustomerReturns } = useCustomerReturns();
+ * ```
  */
 export const useCustomerReturns: UseCustomerReturnsReturn = () => {
   const state = useState<UseCustomerReturnsState>(`useCustomerReturns`, () => ({
     data: {} as PaginatedResult<Order>,
     loading: false,
+    returnReasons: {} as OrderReturnsResponse,
   }));
 
-  /** Function for fetching returns data
+  /** Function for fetching order returns data
+   * @param params { UseUserOrderSearchParams }
+   * @return FetchCustomerReturns
    * @example
-   * fetchCustomerReturns();
+   * ``` ts
+   * fetchCustomerReturns({
+   *    page: 1,
+   * });
+   * ```
    */
-  const fetchCustomerReturns: FetchCustomerReturns = async (params) => {
+  const fetchCustomerReturns: FetchCustomerReturns = async (params: UseUserOrderSearchParams) => {
     state.value.loading = true;
     const { data, error } = await useAsyncData((params.page ?? 1).toString(), () =>
       useSdk().plentysystems.getReturns(params),
@@ -34,8 +44,24 @@ export const useCustomerReturns: UseCustomerReturnsReturn = () => {
     return state.value.data;
   };
 
+  /**
+   * @description Function for getting all return reasons
+   * @return Promise<void>
+   * @example
+   * ``` ts
+   * fetchReturnReasons();
+   * ```
+   */
+  const fetchReturnReasons = async () => {
+    state.value.loading = true;
+    const { data } = await useSdk().plentysystems.getReturnReasons();
+    state.value.returnReasons = data;
+    state.value.loading = false;
+  };
+
   return {
     fetchCustomerReturns,
+    fetchReturnReasons,
     ...toRefs(state.value),
   };
 };

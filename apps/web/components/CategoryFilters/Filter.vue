@@ -31,23 +31,27 @@
     <div class="mb-4" v-else-if="facetGetters.getType(facet) === 'price'">
       <form @submit.prevent="updatePriceFilter">
         <div class="mb-3">
-          <SfInput v-model="minPrice" :placeholder="$t('min')" />
+          <SfInput v-model="minPrice" :placeholder="$t('min')" id="min" />
         </div>
         <div class="mb-3">
-          <SfInput v-model="maxPrice" :placeholder="$t('max')" />
+          <SfInput v-model="maxPrice" :placeholder="$t('max')" id="max" />
         </div>
-        <SfButton type="submit" :disabled="minPrice.length === 0 && maxPrice.length === 0" variant="secondary">
-          <template #prefix>
-            <SfIconCheck />
-          </template>
-          {{ $t('apply') }}
-        </SfButton>
-        <SfButton type="reset" @click="resetPriceFilter" class="float-right" variant="secondary">
-          <template #prefix>
-            <SfIconDelete />
-          </template>
-          {{ $t('clear') }}
-        </SfButton>
+        <div class="flex">
+          <SfButton
+            type="submit"
+            class="w-full mr-3 h-10"
+            :disabled="minPrice.length === 0 && maxPrice.length === 0"
+            variant="secondary"
+          >
+            <template #prefix>
+              <SfIconCheck />
+            </template>
+            {{ $t('apply') }}
+          </SfButton>
+          <SfButton type="reset" @click="resetPriceFilter" class="h-10" variant="secondary">
+            <SfIconClose />
+          </SfButton>
+        </div>
       </form>
     </div>
 
@@ -57,10 +61,17 @@
         :key="index"
         tag="label"
         size="sm"
+        :data-testid="'category-filter-' + index"
         :class="['px-1.5 bg-transparent hover:bg-transparent']"
       >
         <template #prefix>
-          <SfCheckbox class="flex items-center" :value="filter" v-model="models[filter.id]" @change="facetChange" />
+          <SfCheckbox
+            class="flex items-center"
+            :value="filter"
+            v-model="models[filter.id]"
+            :id="filter.name"
+            @change="facetChange"
+          />
         </template>
         <p>
           <span class="mr-2 text-sm">{{ filter.name ?? '' }}</span>
@@ -73,13 +84,12 @@
 
 <script setup lang="ts">
 import { useRoute } from 'nuxt/app';
-import { Filter } from '@plentymarkets/shop-api';
-import { FilterGroup } from '@plentymarkets/shop-api';
+import type { Filter, FilterGroup } from '@plentymarkets/shop-api';
 import { facetGetters } from '@plentymarkets/shop-sdk';
 import {
   SfInput,
   SfIconCheck,
-  SfIconDelete,
+  SfIconClose,
   SfButton,
   SfAccordionItem,
   SfIconChevronLeft,
@@ -88,7 +98,7 @@ import {
   SfCounter,
 } from '@storefront-ui/vue';
 import type { FilterProps } from '~/components/CategoryFilters/types';
-import { useCategoryFilter, Filters } from '~/composables';
+import type { Filters } from '~/composables';
 
 const route = useRoute();
 const { getFacetsFromURL, updateFilters, updatePrices } = useCategoryFilter();
@@ -117,10 +127,12 @@ function resetPriceFilter() {
 
 const updateFilter = () => {
   for (const filter of filters) {
-    models[filter.id.toString()] = Boolean(filter.selected) ?? false;
+    const filterId = typeof filter.id === 'string' ? filter.id : filter.id.toString();
 
-    if (currentFacets.value.includes(filter.id.toString())) {
-      models[filter.id.toString()] = true;
+    models[filterId] = Boolean(filter.selected) ?? false;
+
+    if (currentFacets.value.includes(filterId)) {
+      models[filterId] = true;
     }
   }
 };

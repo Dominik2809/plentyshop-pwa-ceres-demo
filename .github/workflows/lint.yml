@@ -18,7 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
 
       - name: Setup node
         uses: actions/setup-node@v3
@@ -30,7 +33,7 @@ jobs:
       - name: Set yarn version
         run: |
           yarn set version stable
-          yarn set version 3.6.3
+          yarn set version 3.6.4
 
       - name: Setup .yarnrc.yml
         run: |
@@ -44,8 +47,8 @@ jobs:
       - name: Install Dependencies
         run: yarn --frozen-lockfile
 
-      - name: Build packages
-        run: yarn build
+      - name: Run prettier
+        run: yarn format
 
       - name: Run linter
         run: yarn lint

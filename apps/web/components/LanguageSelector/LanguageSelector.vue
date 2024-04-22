@@ -1,42 +1,46 @@
 <template>
-  <div class="w-full bg-white flex items-center justify-center flex-col shadow-xl md:hidden">
-    <SfButton
-      v-for="locale in localeObj"
-      :key="locale"
-      variant="tertiary"
-      square
-      :aria-label="$t('lang.' + locale.code?.toString())"
-      class="py-3 cursor-pointer"
-      @click="switchLocale(locale.code?.toString())"
-      >{{ $t('lang.' + locale.code.toString()) }}</SfButton
-    >
+  <div
+    v-if="isTablet"
+    data-testid="languageSelectList"
+    class="absolute w-full bg-white py-10 flex flex-row items-center justify-center z-10 drop-shadow-md"
+  >
+    <template v-for="locale in localeCodes" :key="locale">
+      <LanguageButton :locale="locale" :variant="locale === currentLocale ? 'primary' : 'tertiary'" class="mx-3 mb-2">
+        <div class="w-6 lg:w-8" v-html="flagList[locale]" />
+        <div>{{ $t(`lang.${locale}`) }}</div>
+      </LanguageButton>
+    </template>
   </div>
-  <div class="hidden md:flex w-full bg-white items-center justify-center absolute z-[99999] top-[10%] shadow-xl">
-    <SfButton
-      v-for="locale in localeObj"
-      :key="locale"
-      variant="tertiary"
-      square
-      :aria-label="$t('lang.' + locale.code?.toString())"
-      class="px-10 py-10 cursor-pointer"
-      @click="switchLocale(locale.code?.toString())"
-      >{{ $t('lang.' + locale.code?.toString()) }}</SfButton
-    >
+
+  <div v-else data-testid="languageSelectList">
+    <UiModal v-model="isOpen" tag="section" class="!p-0 !pt-2.5 flex flex-col !w-11/12" aria-labelledby="login-modal">
+      <template v-for="locale in localeCodes" :key="locale">
+        <LanguageButton
+          :locale="locale"
+          variant="tertiary"
+          class="mx-3 mb-2 flex items-center justify-between !text-black"
+        >
+          <div class="flex">
+            <div class="mr-2 w-8" v-html="flagList[locale]" />
+            <div class="!text-black-500">{{ $t(`lang.${locale}`) }}</div>
+          </div>
+          <SfIconCheck v-if="locale === currentLocale" class="text-green-500" />
+        </LanguageButton>
+      </template>
+    </UiModal>
   </div>
 </template>
+
 <script setup lang="ts">
-import type { LocaleObject } from 'vue-i18n-routing';
+import { SfIconCheck } from '@storefront-ui/vue';
+import { flagImports } from './flags';
 
-const { locales, setLocaleCookie } = useI18n();
-const localeObj = locales as unknown as LocaleObject[];
-const router = useRouter();
-const switchLocalePath = useSwitchLocalePath();
+const { isOpen } = useLocalization();
+const { isTablet } = useBreakpoints();
+const { localeCodes, locale: currentLocale } = useI18n();
+const flagList: { [key: string]: string } = {};
 
-const props = defineProps(['toggleMethod']);
-
-const switchLocale = (language: any) => {
-  setLocaleCookie(language);
-  router.push(switchLocalePath(language));
-  props.toggleMethod();
-};
+localeCodes.value.forEach((localeCode) => {
+  if (flagImports[localeCode]) flagList[localeCode] = flagImports[localeCode];
+});
 </script>

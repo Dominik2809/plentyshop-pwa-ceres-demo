@@ -1,12 +1,14 @@
 export interface Notification {
-  message: string;
+  message: string | string[];
   action?: { text: string; onClick: (...arguments_: any) => void };
   type: 'neutral' | 'positive' | 'secondary' | 'warning' | 'negative';
   persist?: boolean;
   id?: symbol;
   dismiss?: () => void;
+  dismissTimeout?: number;
 }
 export type SendNotification = (notification: Notification) => void;
+export type ClearNotification = () => void;
 
 export interface UseNotificationState {
   data: Notification[];
@@ -15,6 +17,7 @@ export interface UseNotificationState {
 export interface UseNotification {
   data: Readonly<Ref<UseNotificationState['data']>>;
   send: SendNotification;
+  clear: ClearNotification;
 }
 
 export type UseNotificationReturn = () => UseNotification;

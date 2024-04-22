@@ -1,5 +1,4 @@
-import { useRoute } from 'nuxt/app';
-import { Filters, GetFacetsFromURLResponse, UseCategoryFiltersResponse } from './types';
+import type { Filters, GetFacetsFromURLResponse, UseCategoryFiltersResponse } from './types';
 
 const nonFilters = new Set(['page', 'sort', 'term', 'facets', 'itemsPerPage', 'priceMin', 'priceMax']);
 
@@ -33,20 +32,32 @@ const mergeFilters = (oldFilters: Filters, filters: Filters): Filters => {
   return mergedFilters;
 };
 
-const getCategorySlugsFromPath = (path: string): string[] => {
-  const parts = path.split('/');
-  const categoryIndex = parts.indexOf('c');
-
-  return parts.slice(categoryIndex + 1).map((part) => (part.includes('?') ? part.split('?')[0] : part));
-};
-
+/**
+ * @description Composable for managing category filter.
+ * @returns UseCategoryFiltersResponse
+ * @example
+ * ``` ts
+ * const {
+ * getFacetsFromURL, updateFilters, updateItemsPerPage, updateSearchTerm, updateSorting, updatePage, updatePrices
+ * } = useCategoryFilter();
+ * ```
+ */
 export const useCategoryFilter = (): UseCategoryFiltersResponse => {
   const route = useRoute();
-  const router = useRouter();
 
+  /**
+   * @description Function for getting facets from url.
+   * @return GetFacetsFromURLResponse
+   * @example
+   * ``` ts
+   * getFacetsFromURL();
+   * ```
+   */
   const getFacetsFromURL = (): GetFacetsFromURLResponse => {
+    const { getCategoryUrlFromRoute } = useLocalization();
+
     return {
-      categoryUrlPath: getCategorySlugsFromPath(route.fullPath).join('/'),
+      categoryUrlPath: getCategoryUrlFromRoute(route.fullPath),
       page: Number(route.query.page as string) || defaults.DEFAULT_PAGE,
       sort: route.query.sort?.toString(),
       facets: route.query.facets?.toString(),
@@ -57,6 +68,14 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     };
   };
 
+  /**
+   * @description Function for getting filters from url.
+   * @return Filters
+   * @example
+   * ``` ts
+   * getFiltersFromUrl();
+   * ```
+   */
   const getFiltersFromUrl = (): Filters => {
     const filters: Filters = {};
     const facets = getFacetsFromURL().facets?.split(',') ?? [];
@@ -68,6 +87,14 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     return filters;
   };
 
+  /**
+   * @description Function for getting filters data from url.
+   * @return GetFacetsFromURLResponse
+   * @example
+   * ``` ts
+   * getFiltersDataFromUrl();
+   * ```
+   */
   const getFiltersDataFromUrl = (): GetFacetsFromURLResponse => {
     return Object.keys(route.query)
       .filter((f) => nonFilters.has(f))
@@ -89,9 +116,18 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
       }
     });
 
-    router.push({ query: updateQuery });
+    navigateTo({ query: updateQuery });
   };
 
+  /**
+   * @description Function for updating filters.
+   * @param filters { Filters }
+   * @return void
+   * @example
+   * ``` ts
+   * updateFilters(filters);
+   * ```
+   */
   const updateFilters = (filters: Filters): void => {
     const currentFilters = getFiltersFromUrl();
     const mergedFilters = mergeFilters(currentFilters, filters);
@@ -104,6 +140,16 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     }
   };
 
+  /**
+   * @description Function for updating prices.
+   * @param priceMin
+   * @param priceMax
+   * @return void
+   * @example
+   * ``` ts
+   * updatePrices('1', '1');
+   * ```
+   */
   const updatePrices = (priceMin: string, priceMax: string): void => {
     if (priceMin.length > 0 && priceMax.length === 0) {
       updateQuery({ priceMin: priceMin });
@@ -116,14 +162,41 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     }
   };
 
+  /**
+   * @description Function for updating items per page.
+   * @param itemsPerPage
+   * @return void
+   * @example
+   * ``` ts
+   * updateItemsPerPage(1);
+   * ```
+   */
   const updateItemsPerPage = (itemsPerPage: number): void => {
     updateQuery({ itemsPerPage: itemsPerPage, page: 1 });
   };
 
+  /**
+   * @description Function for updating the page.
+   * @param page
+   * @return void
+   * @example
+   * ``` ts
+   * updatePage('1');
+   * ```
+   */
   const updatePage = (page: string): void => {
     updateQuery({ page: page });
   };
 
+  /**
+   * @description Function for updating the search term.
+   * @param term
+   * @return void
+   * @example
+   * ``` ts
+   * updateSearchTerm('1');
+   * ```
+   */
   const updateSearchTerm = (term: string): void => {
     updateQuery({
       term: term || undefined,
@@ -138,8 +211,46 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     });
   };
 
+  /**
+   * @description Function for updating the sorting.
+   * @param sort
+   * @return void
+   * @example
+   * ``` ts
+   * updateSorting('1');
+   * ```
+   */
   const updateSorting = (sort: string): void => {
-    router.push({ query: { ...route.query, sort } });
+    navigateTo({ query: { ...route.query, sort } });
+  };
+
+  /**
+   * @description Function for validating selected filters in the url.
+   * @return void
+   * @example
+   * ``` ts
+   * checkFiltersInURL();
+   * ```
+   */
+  const checkFiltersInURL = (): void => {
+    const { data: productsCatalog } = useProducts();
+    const facetsFromUrl = getFacetsFromURL();
+    const facetsFromResponse = productsCatalog.value.facets;
+
+    if (facetsFromUrl.facets) {
+      const facets = facetsFromUrl.facets.split(',');
+
+      const updatedFacets = facets.filter((facet) => {
+        return facetsFromResponse.some((facetItem) => {
+          if (facetItem.values) {
+            return facetItem.values.some((facetValue) => facetValue.id.toString() === facet);
+          }
+          return false;
+        });
+      });
+
+      updateQuery({ facets: updatedFacets.join(',') });
+    }
   };
 
   return {
@@ -150,6 +261,8 @@ export const useCategoryFilter = (): UseCategoryFiltersResponse => {
     updateSorting,
     updatePage,
     updatePrices,
+    updateQuery,
+    checkFiltersInURL,
   };
 };
 

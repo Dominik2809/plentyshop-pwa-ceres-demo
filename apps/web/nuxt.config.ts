@@ -2,6 +2,7 @@
 import cookieConfig from './cookie.config';
 
 export default defineNuxtConfig({
+  telemetry: false,
   devtools: { enabled: true },
   typescript: {
     typeCheck: true,
@@ -14,7 +15,7 @@ export default defineNuxtConfig({
       },
       meta: [
         { name: 'description', content: 'plentyshop PWA' },
-        { name: 'theme-color', content: '#018937' },
+        { name: 'theme-color', content: '#0C7992' },
       ],
       link: [
         { rel: 'icon', href: '/favicon.ico' },
@@ -44,16 +45,18 @@ export default defineNuxtConfig({
     },
   },
   modules: [
-    '@nuxtjs/tailwindcss',
     [
       '@nuxtjs/google-fonts',
       {
         families: {
-          'Red Hat Display': [400, 500, 700],
-          'Red Hat Text': [300, 400, 500, 700],
+          'Red Hat Display': { wght: [400, 500, 700] },
+          'Red Hat Text': { wght: [300, 400, 500, 700] },
         },
       },
     ],
+    '@nuxtjs/turnstile',
+    '@nuxtjs/sitemap',
+    '@nuxtjs/tailwindcss',
     [
       '@nuxtjs/i18n',
       {
@@ -67,14 +70,26 @@ export default defineNuxtConfig({
             file: 'de.json',
           },
         ],
-        lazy: true,
         langDir: 'lang',
         defaultLocale: 'en',
+        strategy: 'prefix_and_default',
+      },
+    ],
+    [
+      '@vee-validate/nuxt',
+      {
+        autoImports: true,
+        componentNames: {
+          Form: 'VeeForm',
+          Field: 'VeeField',
+          FieldArray: 'VeeFieldArray',
+          ErrorMessage: 'VeeErrorMessage',
+        },
       },
     ],
     '@nuxt/image',
     '@vite-pwa/nuxt',
-    'nuxt-vitest',
+    '@nuxt/test-utils/module',
     'nuxt-lazy-hydrate',
   ],
   // eslint-disable-next-line unicorn/expiring-todo-comments
@@ -85,32 +100,67 @@ export default defineNuxtConfig({
     },
     compressPublicAssets: true,
   },
+  turnstile: {
+    siteKey: process.env?.CLOUDFLARE_TURNSTILE_SITE_KEY,
+  },
   routeRules: {
     '/_ipx/**': { headers: { 'cache-control': `public, max-age=31536000, immutable` } },
     '/icons/**': { headers: { 'cache-control': `public, max-age=31536000, immutable` } },
     '/favicon.ico': { headers: { 'cache-control': `public, max-age=31536000, immutable` } },
   },
+  site: {
+    url: '',
+  },
+  sitemap: {
+    xslColumns: [
+      // URL column must always be set, no value needed
+      { label: 'URL', width: '75%' },
+      { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
+    ],
+    autoLastmod: true,
+    sitemaps: {
+      'sitemap/content': {
+        exclude: [
+          '/en/**', // default language
+          '/search',
+          '/offline',
+          '/my-account/**',
+          '/readonly-checkout',
+          '/set-new-password',
+          '/reset-password-success',
+          '/cart',
+          '/checkout',
+          '/thank-you',
+          '/wishlist',
+          '/login',
+          '/signup',
+          '/reset-password',
+        ],
+        includeAppSources: true,
+      },
+    },
+  },
   hooks: {
     'pages:extend'(pages) {
-      pages.push(
-        {
-          name: 'category',
-          path: '/c/:slug?/:slug_2?/:slug_3?/:slug_4?/:slug_5?/:slug_6?',
-          file: __dirname + '/pages/category/[slug].vue',
-        },
-        {
-          name: 'product',
-          path: '/:slug?/:slug_2?/:slug_3?/:slug_4?/:slug_5?/:slug_6?_:itemId',
-          file: __dirname + '/pages/product/[slug].vue',
-        },
-      );
+      pages.push({
+        name: 'product',
+        path: '/:slug?/:slug_2?/:slug_3?/:slug_4?/:slug_5?/:slug_6?_:itemId',
+        file: __dirname + '/pages/product/[slug].vue',
+      });
     },
   },
   runtimeConfig: {
     public: {
-      apiUrl: 'http://localhost:8181',
+      apiUrl: process.env.API_URL ?? 'http://localhost:8181',
+      apiEndpoint: process.env.API_ENDPOINT ?? 'https://mevofvd5omld.c01-14.plentymarkets.com',
       cookieGroups: cookieConfig,
       showNetPrices: true,
+      logoUrl: (process.env.API_URL ?? 'http://localhost:8181') + '/images/logo.png',
+      turnstileSiteKey: process.env?.CLOUDFLARE_TURNSTILE_SITE_KEY ?? '',
+      newsletterFromShowNames: process.env?.NEWSLETTER_FORM_SHOW_NAMES === '1' ?? false,
+      useAvif: process.env?.USE_AVIF === '1' ?? false,
+      useWebp: process.env?.USE_WEBP === '1' ?? false,
+      validateReturnReasons: process.env.VALIDATE_RETURN_REASONS === '1' ?? false,
     },
   },
   pwa: {
@@ -128,6 +178,7 @@ export default defineNuxtConfig({
       navigationPreload: true,
       runtimeCaching: [
         {
+          // @ts-ignore
           urlPattern: ({ request }) => request.mode === 'navigate',
           handler: 'NetworkOnly',
           options: {
@@ -142,7 +193,7 @@ export default defineNuxtConfig({
     manifest: {
       name: 'plentyshop PWA',
       short_name: 'plentyshopPWA',
-      theme_color: '#018937',
+      theme_color: '#0C7992',
       icons: [
         {
           src: 'icons/icon-192x192.png',

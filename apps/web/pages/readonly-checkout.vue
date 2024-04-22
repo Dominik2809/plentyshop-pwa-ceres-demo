@@ -1,10 +1,10 @@
 <template>
   <NuxtLayout
     name="checkout"
-    :back-href="paths.cart"
-    :back-label-desktop="$t('backToCart')"
-    :back-label-mobile="$t('back')"
-    :heading="$t('checkout')"
+    :back-href="localePath(paths.cart)"
+    :back-label-desktop="t('backToCart')"
+    :back-label-mobile="t('back')"
+    :heading="t('checkout')"
   >
     <div v-if="cart" class="md:grid md:grid-cols-12 md:gap-x-6">
       <div class="col-span-7 mb-10 md:mb-0">
@@ -13,9 +13,9 @@
         <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" />
         <CheckoutAddress
           id="billing-address"
-          :heading="$t('billing.heading')"
-          :description="$t('billing.description')"
-          :button-text="$t('billing.addButton')"
+          :heading="t('billing.heading')"
+          :description="t('billing.description')"
+          :button-text="t('billing.addButton')"
           :addresses="billingAddresses"
           :type="AddressType.Billing"
           disabled
@@ -23,9 +23,9 @@
         <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" />
         <CheckoutAddress
           id="shipping-address"
-          :heading="$t('shipping.heading')"
-          :description="$t('shipping.description')"
-          :button-text="$t('shipping.addButton')"
+          :heading="t('shipping.heading')"
+          :description="t('shipping.description')"
+          :button-text="t('shipping.addButton')"
           :addresses="shippingAddresses"
           :type="AddressType.Shipping"
           disabled
@@ -51,35 +51,35 @@
               <i18n-t keypath="termsInfo">
                 <template #terms>
                   <SfLink
-                    href="/TermsAndConditions"
+                    :href="localePath(paths.termsAndConditions)"
                     target="_blank"
                     class="focus:outline focus:outline-offset-2 focus:outline-2 outline-secondary-600 rounded"
                   >
-                    {{ $t('termsAndConditions') }}
+                    {{ t('termsAndConditions') }}
                   </SfLink>
                 </template>
                 <template #cancellationRights>
                   <SfLink
-                    href="/CancellationRights"
+                    :href="localePath(paths.cancellationRights)"
                     target="_blank"
                     class="focus:outline focus:outline-offset-2 focus:outline-2 outline-secondary-600 rounded"
                   >
-                    {{ $t('cancellationRights') }}
+                    {{ t('cancellationRights') }}
                   </SfLink>
                 </template>
                 <template #privacyPolicy>
                   <SfLink
-                    href="/PrivacyPolicy"
+                    :href="localePath(paths.privacyPolicy)"
                     target="_blank"
                     class="focus:outline focus:outline-offset-2 focus:outline-2 outline-secondary-600 rounded"
                   >
-                    {{ $t('privacyPolicy') }}
+                    {{ t('privacyPolicy') }}
                   </SfLink>
                 </template>
               </i18n-t>
             </div>
           </div>
-          <div v-if="showTermsError" class="text-negative-700 text-sm mt-2">{{ $t('termsRequired') }}</div>
+          <div v-if="showTermsError" class="text-negative-700 text-sm mt-2">{{ t('termsRequired') }}</div>
         </div>
       </div>
       <div class="col-span-5">
@@ -102,7 +102,7 @@
                 size="sm"
               />
               <span v-else>
-                {{ $t('buy') }}
+                {{ t('buy') }}
               </span>
             </SfButton>
           </OrderSummary>
@@ -113,27 +113,34 @@
 </template>
 
 <script lang="ts" setup>
-import { AddressType, PaymentMethod } from '@plentymarkets/shop-api';
+import { AddressType, type PaymentMethod } from '@plentymarkets/shop-api';
 import { orderGetters, shippingProviderGetters } from '@plentymarkets/shop-sdk';
 import { SfButton, SfLink, SfCheckbox, SfLoaderCircular } from '@storefront-ui/vue';
-import { paypalGetters } from '~/getters/paypalGetters';
 
 definePageMeta({
   layoutName: 'checkout',
+  pageType: 'static',
 });
 
 const ID_CHECKBOX = '#terms-checkbox';
 
+const { getSession } = useCustomer();
 const { data: cart, clearCartItems, loading: cartLoading } = useCart();
 const { data: billingAddresses, getAddresses: getBillingAddresses } = useAddress(AddressType.Billing);
-const { data: shippingAddresses, getAddresses: getShippingAddresses } = useAddress(AddressType.Shipping);
+const {
+  data: shippingAddresses,
+  getAddresses: getShippingAddresses,
+  saveAddress: saveShippingAddress,
+} = useAddress(AddressType.Shipping);
 const { data: shippingMethodData, getShippingMethods } = useCartShippingMethods();
 const { data: paymentMethodData, fetchPaymentMethods, savePaymentMethod } = usePaymentMethods();
 const { loading: createOrderLoading, createOrder } = useMakeOrder();
 const { shippingPrivacyAgreement } = useAdditionalInformation();
-const router = useRouter();
 const { loading: executeOrderLoading, executeOrder } = usePayPal();
 const route = useRoute();
+const { send } = useNotification();
+const { t } = useI18n();
+const localePath = useLocalePath();
 
 const termsAccepted = ref(false);
 const showTermsError = ref(false);
@@ -141,9 +148,31 @@ const showTermsError = ref(false);
 const loadAddresses = async () => {
   await getBillingAddresses();
   await getShippingAddresses();
+
+  if (shippingAddresses.value.length === 0 && billingAddresses.value.length > 0) {
+    await saveShippingAddress(billingAddresses.value[0]);
+  } else if (shippingAddresses.value.length === 0 && billingAddresses.value.length === 0) {
+    navigateTo(localePath(paths.cart));
+  }
+
   await getShippingMethods();
 };
 
+const redirectBack = () => {
+  if (cart.value.items?.length === 0) {
+    send({
+      type: 'neutral',
+      message: t('emptyCart'),
+    });
+
+    navigateTo(localePath(paths.cart));
+    return true;
+  }
+  return false;
+};
+
+await getSession();
+redirectBack();
 await loadAddresses();
 await getShippingMethods();
 await fetchPaymentMethods();
@@ -179,7 +208,7 @@ const validateTerms = (): boolean => {
 };
 
 const order = async () => {
-  if (!validateTerms()) {
+  if (redirectBack() || !validateTerms()) {
     return;
   }
 
@@ -192,13 +221,12 @@ const order = async () => {
     mode: 'paypal',
     plentyOrderId: Number.parseInt(orderGetters.getId(data)),
     paypalTransactionId: route?.query?.orderId?.toString() ?? '',
-    paypalMerchantId: paypalGetters.getMerchantId() ?? '',
   });
 
   clearCartItems();
 
   if (data?.order?.id) {
-    router.push('/thank-you/?orderId=' + data.order.id + '&accessKey=' + data.order.accessKey);
+    navigateTo(localePath('/thank-you/?orderId=' + data.order.id + '&accessKey=' + data.order.accessKey));
   }
 };
 </script>

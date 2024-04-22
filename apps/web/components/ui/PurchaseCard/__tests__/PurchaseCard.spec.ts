@@ -1,13 +1,13 @@
 import { mount } from '@vue/test-utils';
-import PurchaseCard from '~/components/ui/PurchaseCard/PurchaseCard.vue';
-import type { Product } from '@plentymarkets/shop-api';
-import { ReviewAverage } from '@plentymarkets/shop-api';
+import { UiPurchaseCard }from '#components';
+import type { ReviewAverage } from '@plentymarkets/shop-api';
+import { ProductMock } from '../../../../__tests__/__mocks__/product.mock';
 
 describe('<PurchaseCard />', () => {
   it('should render component', () => {
-    const wrapper = mount(PurchaseCard, {
+    const wrapper = mount(UiPurchaseCard, {
       props: {
-        product: {} as Product,
+        product: ProductMock,
         reviewAverage: {} as ReviewAverage
       },
     });

@@ -4,7 +4,7 @@
       {{ $t('sortBy') }}
     </h6>
     <div class="px-4">
-      <SfSelect v-model="selected" :aria-label="$t('sortBy')" @change="sortingChanged">
+      <SfSelect v-model="selected" :aria-label="$t('sortBy')" id="sortBy" @change="sortingChanged">
         <option v-for="{ value, label } in options" :key="value" :value="value">
           {{ $t(`sortType.${label}`) }}
         </option>
@@ -16,7 +16,6 @@
 <script setup lang="ts">
 import { useRoute } from 'nuxt/app';
 import { SfSelect } from '@storefront-ui/vue';
-import { useCategoryFilter } from '~/composables';
 
 const { getFacetsFromURL, updateSorting } = useCategoryFilter();
 const route = useRoute();
