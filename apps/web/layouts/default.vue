@@ -9,7 +9,6 @@
     </main>
     <NuxtLazyHydrate when-idle>
       <UiNavbarBottom v-if="viewport.isLessThan('lg')" />
-      <Cookiebar />
       <PreviewMode />
     </NuxtLazyHydrate>
     <NuxtLazyHydrate when-visible>
