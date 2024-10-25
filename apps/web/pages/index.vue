@@ -1,140 +1,179 @@
 <template>
-  <div class="relative min-h-[600px]">
-    <div class="absolute w-full h-full z-[-1]">
-      <img
-        :src="background.image"
-        :width="getSizeForViewport(background.sizes).width"
-        :height="getSizeForViewport(background.sizes).height"
-        alt="Hero background"
-        class="absolute top-0 left-0 w-full h-full object-cover"
+  <UiHeroCarousel :hero-item-props="formattedHeroItems" />
+
+  <NuxtLazyHydrate when-visible>
+    <div class="max-w-screen-3xl mx-auto md:px-6 lg:px-10 mb-10">
+      <UiMediaCard
+        v-for="(item, index) in mediaData"
+        :key="index"
+        :image="item.image"
+        :alt="item.alt"
+        :text="item.text"
+        :alignment="item.alignment"
       />
     </div>
-    <div class="md:flex md:flex-row-reverse md:justify-center max-w-[1536px] mx-auto md:min-h-[600px]">
-      <div class="flex flex-col md:basis-2/4 md:items-stretch md:overflow-hidden">
-        <img
-          :src="headPhones.image"
-          :width="getSizeForViewport(headPhones.sizes).width"
-          :height="getSizeForViewport(headPhones.sizes).height"
-          alt="Headphones"
-          class="h-full object-cover object-left"
-        />
-      </div>
-      <div class="p-4 md:p-10 md:max-w-[768px] md:flex md:flex-col md:justify-center md:items-start md:basis-2/4">
-        <p class="typography-text-xs md:typography-text-sm font-bold tracking-widest text-neutral-500 uppercase">
-          {{ t('homepage.banner.moto1') }}
-        </p>
-        <h1 class="typography-display-2 md:typography-display-1 md:leading-[67.5px] font-bold mt-2 mb-4">
-          {{ t('homepage.banner.moto2') }}
-        </h1>
-        <p class="typography-text-base md:typography-text-lg">
-          {{ t('homepage.banner.moto3') }}
-        </p>
-        <div class="flex flex-col md:flex-row gap-4 mt-6">
-          <UiButton size="lg"> {{ t('homepage.banner.orderNow') }}</UiButton>
-          <UiButton size="lg" variant="secondary" class="bg-white"> {{ t('homepage.banner.showMore') }}</UiButton>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="max-w-screen-3xl mx-auto md:px-6 lg:px-10">
-    <div class="flex flex-wrap gap-4 lg:gap-6 lg:flex-no-wrap justify-center my-10">
-      <div
-        v-for="{ title, image } in categories"
-        :key="title"
-        role="img"
-        :aria-label="title"
-        :aria-labelledby="`image-${title}`"
-        class="relative flex-col min-w-[140px] max-w-[360px] justify-center group"
-      >
-        <img
-          :src="image"
-          :alt="title"
-          format="avif"
-          class="rounded-full bg-neutral-100 group-hover:shadow-xl group-active:shadow-none"
-          width="360"
-          height="360"
-          loading="lazy"
-        />
-        <div :id="`image-${title}`" class="flex justify-center">
-          <div
-            class="mt-4 font-semibold no-underline text-normal-900 typography-text-base group-hover:text-primary-800 group-active:text-primary-800"
-          >
-            {{ title }}
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="flex flex-col md:flex-row flex-wrap gap-6 mt-max-w-[1540px]">
-      <div
-        v-for="details in displayDetails"
-        :key="details.title"
-        :class="[
-          'relative flex md:max-w-[1536px] md:[&:not(:first-of-type)]:flex-1 md:first-of-type:w-full',
-          details.backgroundColor,
-        ]"
-      >
-        <div :class="['flex justify-between overflow-hidden grow', { 'flex-row-reverse': details.reverse }]">
-          <div class="flex flex-col justify-center items-start p-6 lg:p-10 max-w-1/2">
-            <p :class="['uppercase typography-text-xs block font-bold tracking-widest', details.subtitleClass]">
-              {{ details.subtitle }}
-            </p>
-            <h2 :class="['mb-4 mt-2 font-bold typography-display-3', details.titleClass]">
-              {{ details.title }}
-            </h2>
-            <p class="typography-text-base block mb-4">
-              {{ details.description }}
-            </p>
-            <NuxtLink to="/">
-              <UiButton class="!bg-black hover:!bg-white hover:!text-black">{{ details.buttonText }}</UiButton>
-            </NuxtLink>
-          </div>
-          <img
-            :src="details.image"
-            :alt="details.title"
-            :width="getSizeForViewport(details.sizes).width"
-            :height="getSizeForViewport(details.sizes).height"
-            class="self-end object-contain"
-            loading="lazy"
-          />
-        </div>
-      </div>
-    </div>
+  </NuxtLazyHydrate>
+
+  <div class="max-w-screen-3xl mx-auto md:px-6 lg:px-10 mb-10">
     <NuxtLazyHydrate when-visible>
-      <NewsletterSubscribe />
-    </NuxtLazyHydrate>
-    <NuxtLazyHydrate when-visible>
-      <section class="mx-4 mt-28 mb-20 overflow-hidden">
-        <p data-testid="recommended-products" class="my-4 typography-text-lg">
+      <section class="mb-10 overflow-hidden">
+        <p data-testid="recommended-products" class="mb-4 typography-text-lg text-center md:text-left">
           {{ t('moreItemsOfThisCategory') }}
         </p>
         <ProductRecommendedProducts cache-key="homepage" :category-id="recommendedProductsCategoryId" />
       </section>
     </NuxtLazyHydrate>
+    <NuxtLazyHydrate when-visible>
+      <NewsletterSubscribe v-if="showNewsletter" />
+    </NuxtLazyHydrate>
   </div>
 </template>
 
 <script lang="ts" setup>
+import { HeroItem, SizeKey } from '~/components/ui/HeroCarousel/types';
+import { MediaItem } from '~/components/ui/MediaCard/types';
+import { extractImageName } from '~/utils/urlHelper';
 const viewport = useViewport();
 const { t } = useI18n();
 const { data: categoryTree } = useCategoryTree();
 const recommendedProductsCategoryId = ref('');
 definePageMeta({ pageType: 'static' });
 
-type Size = {
-  width: string;
-  height: string;
+const getCurrentSizeKey = (): SizeKey => {
+  return viewport.breakpoint.value as SizeKey;
 };
-type Sizes = {
-  lg: Size;
-  md: Size;
-  sm: Size;
+const resolveImage = (imageSizes: Record<SizeKey, string>, sizeKey: SizeKey): string => {
+  return imageSizes[sizeKey];
 };
-type SizeKey = keyof Sizes;
+const defaultHomepageTemplate = {
+  id: 100,
+  hero: [
+    {
+      image: {
+        lg: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/homepage-hero-headphones.avif',
+        md: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-md.avif',
+        sm: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-sm.avif',
+        xs: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-xs.avif',
+        alt: 'Headphones',
+      },
+      tagline: 'Feel the music',
+      taglineColor: '#000000',
+      heading: 'Your Sound, Elevated',
+      headingColor: '#000000',
+      description:
+        "Immerse yourself in rich, crystal-clear audio with our cutting-edge headphones. Designed for the ultimate listening experience, whether you're a casual listener or an audiophile. Discover the perfect blend of style, comfort, and sound quality that elevates your music to new heights.\n" +
+        '\n',
+      descriptionColor: '#000000',
+      callToAction: 'Order Now',
+      link: '',
+    },
+    {
+      image: {
+        lg: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/homepage-hero-headphones.avif',
+        md: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-md.avif',
+        sm: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-sm.avif',
+        xs: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-xs.avif',
+        alt: 'Headphones',
+      },
+      tagline: 'Experience Sound Freedom',
+      taglineColor: '#000000',
+      heading: 'Wireless. Effortless. Seamless.',
+      headingColor: '#000000',
+      description:
+        'Unleash your audio with our state-of-the-art wireless earbuds. Designed for all-day comfort and uncompromised sound quality, these earbuds deliver crisp highs and deep bass, letting you enjoy your music without any distractions. Discover freedom with a perfect fit, long battery life, and intuitive controls.',
+      descriptionColor: '#000000',
+      callToAction: 'Shop Earbuds',
+      link: '',
+    },
+    {
+      image: {
+        lg: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/homepage-hero-headphones.avif',
+        md: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-md.avif',
+        sm: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-sm.avif',
+        xs: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-xs.avif',
+        alt: 'Headphones',
+      },
+      tagline: 'Amplify Your Space',
+      taglineColor: '#000000',
+      heading: 'Big Sound, Compact Design',
+      headingColor: '#000000',
+      description:
+        "Transform your space with our portable speakers that pack a punch. Crafted for superior sound performance, these speakers are perfect for home or on the go. With easy connectivity and a sleek design, elevate your listening experience whether you're indoors or outdoors.",
+      descriptionColor: '#000000',
+      callToAction: 'Browse Speakers',
+      link: '',
+    },
+  ],
+  valueProposition: [
+    {
+      text: "<div class='flex flex-col mt-5 sm:mt-20 mt-0 sm:p-0 p-5 text-center sm:text-left'><span class='text-xl font-bold mb-2'>Experience the Future of Sound</span><h2 class='text-2xl font-semibold mb-4'>Redefine Your Listening Experience</h2><p class='typography-text-sm md:typography-text-lg mb-6 padding-right-desktop'>Our latest collection of headphones is designed to deliver unparalleled audio precision, with deep bass, clear highs, and an immersive experience for every genre of music. Combining sleek design, comfort, and cutting-edge technology, these headphones are made for those who refuse to compromise on sound quality.</p><ul class='list-disc list-inside typography-text-sm md:typography-text-lg '><li>Premium, studio-quality sound</li><li>Comfortable fit for extended listening</li><li>Long-lasting battery life</li><li>Seamless wireless connectivity</li></ul></div>",
+      image: 'https://cdn02.plentymarkets.com/mevofvd5omld/frontend/headphones-mediacard.avif',
+      alt: 'Headphones',
+      alignment: 'left',
+    },
+  ],
+  featured: [
+    {
+      headline: '',
+      categoryId: 1,
+    },
+    {
+      headline: '',
+      categoryId: 2,
+    },
+  ],
+};
 
-const getSizeForViewport = (sizes: Sizes) => {
-  const breakpoint = viewport.breakpoint.value as SizeKey;
-  return sizes[breakpoint];
-};
+const runtimeConfig = useRuntimeConfig();
+const homepageTemplate = ref<typeof defaultHomepageTemplate>(defaultHomepageTemplate);
+const homepageCategoryId = runtimeConfig.public.homepageCategoryId;
+const { fetchCategoryTemplate } = useCategoryTemplate();
+if (typeof homepageCategoryId === 'number') {
+  const { data } = await fetchCategoryTemplate(homepageCategoryId);
+  const parsedData = JSON.parse(data);
+  if (parsedData) {
+    homepageTemplate.value = {
+      id: parsedData.id,
+      hero: parsedData.hero || [],
+      valueProposition: parsedData.valueProposition,
+      featured: parsedData.featured,
+    };
+  }
+}
+
+const mediaData = ref<MediaItem[]>(
+  homepageTemplate.value.valueProposition.map((media: MediaItem) => ({
+    image: media.image,
+    alt: media.alt ?? extractImageName(media.image),
+    text: media.text,
+    alignment: media.alignment,
+  })),
+);
+
+const formattedHeroItems = ref<HeroItem[]>(
+  homepageTemplate.value.hero.map((item) => {
+    const currentSizeKey = getCurrentSizeKey() as SizeKey;
+    return {
+      image: resolveImage(item.image, currentSizeKey),
+      alt: item.image.alt ?? extractImageName(resolveImage(item.image, currentSizeKey)),
+      tagline: item.tagline,
+      taglineColor: item.taglineColor,
+      heading: item.heading,
+      headingColor: item.headingColor,
+      description: item.description,
+      descriptionColor: item.descriptionColor,
+      callToAction: item.callToAction,
+      link: item.link,
+      backgroundSizes: {
+        lg: { width: '4000', height: '600' },
+        md: { width: '1024', height: '600' },
+        sm: { width: '640', height: '752' },
+        xs: { width: '250', height: '250' },
+      },
+      actualBackgroundSize: currentSizeKey,
+    };
+  }),
+);
 
 watch(
   () => categoryTree.value,
@@ -144,101 +183,11 @@ watch(
   },
   { immediate: true },
 );
-const displayDetails = computed(() => {
-  return [
-    {
-      image: `/images/${viewport.breakpoint.value}/homepage-display-1.avif`,
-      title: t('homepage.displayDetails.detail1.title'),
-      subtitle: t('homepage.displayDetails.detail1.subtitle'),
-      description: t('homepage.displayDetails.detail1.description'),
-      buttonText: t('homepage.displayDetails.detail1.buttonText'),
-      reverse: false,
-      backgroundColor: 'bg-negative-200',
-      titleClass: 'md:typography-display-2',
-      subtitleClass: 'md:typography-headline-6',
-      descriptionClass: 'md:typography-text-lg',
-      sizes: {
-        lg: {
-          width: '728',
-          height: '728',
-        },
-        md: {
-          width: '488',
-          height: '488',
-        },
-        sm: {
-          width: '320',
-          height: '320',
-        },
-      },
-    },
-    {
-      image: `/images/${viewport.breakpoint.value}/homepage-display-2.avif`,
-      title: t('homepage.displayDetails.detail2.title'),
-      subtitle: t('homepage.displayDetails.detail2.subtitle'),
-      description: t('homepage.displayDetails.detail2.description'),
-      buttonText: t('homepage.displayDetails.detail2.buttonText'),
-      reverse: true,
-      backgroundColor: 'bg-warning-200',
-      sizes: {
-        lg: {
-          width: '358',
-          height: '358',
-        },
-        md: {
-          width: '472',
-          height: '472',
-        },
-        sm: {
-          width: '320',
-          height: '320',
-        },
-      },
-    },
-    {
-      image: `/images/${viewport.breakpoint.value}/homepage-display-3.avif`,
-      title: t('homepage.displayDetails.detail3.title'),
-      subtitle: t('homepage.displayDetails.detail3.subtitle'),
-      description: t('homepage.displayDetails.detail3.description'),
-      buttonText: t('homepage.displayDetails.detail3.buttonText'),
-      reverse: false,
-      backgroundColor: 'bg-secondary-50',
-      sizes: {
-        lg: {
-          width: '358',
-          height: '358',
-        },
-        md: {
-          width: '238',
-          height: '238',
-        },
-        sm: {
-          width: '320',
-          height: '320',
-        },
-      },
-    },
-  ];
-});
-const headPhones = {
-  image: `/images/${viewport.breakpoint.value}/homepage-hero-headphones.avif`,
-  sizes: {
-    lg: {
-      width: '800',
-      height: '600',
-    },
-    md: {
-      width: '800',
-      height: '600',
-    },
-    sm: {
-      width: '640',
-      height: '480',
-    },
-  },
-};
+const { showNewsletter } = useNewsletter();
+
 const background = {
   image: `/images/${viewport.breakpoint.value}/homepage-hero-bg.avif`,
+  alt: t('homepage.background'),
   sizes: {
     lg: {
       width: '4000',
@@ -254,31 +203,12 @@ const background = {
     },
   },
 };
-const categories = [
-  {
-    title: t('homepage.women'),
-    image: '/images/homepage-women-category.avif',
-  },
-  {
-    title: t('homepage.men'),
-    image: '/images/homepage-men-category.avif',
-  },
-  {
-    title: t('homepage.kid'),
-    image: '/images/homepage-kid-category.avif',
-  },
-];
 
 useHead({
   link: [
     {
       rel: 'preload',
       href: background.image,
-      as: 'image',
-    },
-    {
-      rel: 'preload',
-      href: headPhones.image,
       as: 'image',
     },
   ],

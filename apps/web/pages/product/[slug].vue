@@ -9,7 +9,7 @@
         </section>
         <section class="mb-10 grid-in-right md:mb-0">
           <NuxtLazyHydrate when-idle>
-            <UiPurchaseCard v-if="product" :product="product" :review-average="productReviewAverage" />
+            <UiPurchaseCard v-if="product" :product="product" :review-average="countsProductReviews" />
           </NuxtLazyHydrate>
         </section>
         <section class="grid-in-left-bottom md:mt-8">
@@ -20,8 +20,15 @@
           <ReviewsAccordion
             v-if="product"
             :product="product"
-            :total-reviews="reviewGetters.getTotalReviews(productReviewAverage)"
+            :total-reviews="reviewGetters.getTotalReviews(countsProductReviews)"
           />
+
+          <div class="p-4 flex">
+            <p @click="openDrawer()" class="font-bold leading-6 cursor-pointer">
+              <span>{{ t('legalDetails') }}</span>
+              <SfIconChevronRight />
+            </p>
+          </div>
         </section>
       </div>
       <section class="mx-4 mt-28 mb-20">
@@ -34,25 +41,32 @@
     </NarrowContainer>
 
     <UiReviewModal />
+    <ProductLegalDetailsDrawer v-if="open" :product="product" />
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { Product, productGetters, reviewGetters } from '@plentymarkets/shop-api';
+import { SfIconChevronRight } from '@storefront-ui/vue';
+import { Product, productGetters, reviewGetters, categoryTreeGetters } from '@plentymarkets/shop-api';
 
 definePageMeta({
   layout: false,
   path: '/:slug*_:itemId',
 });
 
+const { t } = useI18n();
 const route = useRoute();
 const { setCurrentProduct } = useProducts();
+const { setProductMetaData } = useStructuredData();
 const { buildProductLanguagePath } = useLocalization();
 const { addModernImageExtensionForGallery } = useModernImage();
 const { productParams, productId } = createProductParams(route.params);
 const { data: product, fetchProduct, setProductMeta, setBreadcrumbs, breadcrumbs } = useProduct(productId);
-const { data: productReviewAverage, fetchProductReviewAverage } = useProductReviewAverage(Number(productId));
-const { fetchProductReviews } = useProductReviews(Number(productId));
+const { data: productReviews, fetchProductReviews } = useProductReviews(Number(productId));
+const { data: categoryTree } = useCategoryTree();
+const { open, openDrawer } = useProductLegalDetailsDrawer();
+
+const countsProductReviews = computed(() => reviewGetters.getReviewCounts(productReviews.value));
 
 await fetchProduct(productParams);
 setCurrentProduct(product.value || ({} as Product));
@@ -60,10 +74,7 @@ setProductMeta();
 
 async function fetchReviews() {
   const productVariationId = productGetters.getVariationId(product.value);
-  await Promise.all([
-    fetchProductReviews(Number(productId), productVariationId),
-    fetchProductReviewAverage(Number(productId)),
-  ]);
+  await fetchProductReviews(Number(productId), productVariationId);
 }
 await fetchReviews();
 
@@ -86,5 +97,19 @@ watch(
       });
     }
   },
+);
+
+watch(
+  () => categoryTree.value,
+  (categoriesTree) => {
+    const productCategoryId = productGetters.getParentCategoryId(product.value);
+    if (categoriesTree.length > 0 && productCategoryId) {
+      const categoryTree = categoriesTree.find(
+        (categoryTree) => categoryTreeGetters.getId(categoryTree) === productCategoryId,
+      );
+      if (categoryTree) setProductMetaData(product.value, categoryTree);
+    }
+  },
+  { immediate: true },
 );
 </script>

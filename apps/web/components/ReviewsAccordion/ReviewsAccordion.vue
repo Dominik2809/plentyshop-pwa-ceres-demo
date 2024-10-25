@@ -1,9 +1,5 @@
 <template>
-  <div
-    ref="accordionReference"
-    class="relative col-span-5 md:sticky md:top-10 h-fit"
-    :class="{ 'pointer-events-none opacity-50': loadingReviews }"
-  >
+  <div ref="reviewArea" class="relative col-span-5 h-fit" :class="{ 'pointer-events-none opacity-50': loadingReviews }">
     <SfLoaderCircular v-if="loadingReviews" class="absolute top-[130px] right-0 left-0 m-auto z-[999]" size="2xl" />
 
     <div data-testid="reviews-accordion" id="customerReviewsAccordion">
@@ -32,7 +28,7 @@
           :key="pagination.totalCount"
           :current-page="currentPage"
           :total-items="pagination.totalCount"
-          :page-size="defaults.DEFAULT_FEEDBACK_ITEMS_PER_PAGE"
+          :page-size="config.defaultItemsPerPage"
           :max-visible-pages="maxVisiblePages"
           current-page-name="feedbackPage"
         />
@@ -45,7 +41,6 @@
 import { productGetters, reviewGetters } from '@plentymarkets/shop-api';
 import { SfLoaderCircular } from '@storefront-ui/vue';
 import { type ProductAccordionPropsType } from '~/components/ReviewsAccordion/types';
-import { defaults } from '~/composables';
 
 const { product } = defineProps<ProductAccordionPropsType>();
 
@@ -55,14 +50,16 @@ const viewport = useViewport();
 const reviewsOpen = ref(true);
 const route = useRoute();
 
+const config = useRuntimeConfig().public;
+
 const productId = Number(productGetters.getItemId(product));
 const productVariationId = productGetters.getVariationId(product);
-const accordionReference = ref<HTMLElement | null>(null);
 
 const {
   data: productReviews,
   loading: loadingReviews,
   fetchReviews,
+  reviewArea,
 } = useProductReviews(productId, productVariationId);
 
 const paginatedProductReviews = computed(() => reviewGetters.getReviewItems(productReviews.value));
@@ -81,7 +78,7 @@ watch(
 watch(
   () => route.query.feedbackPage,
   async () => {
-    if (accordionReference.value) accordionReference.value.scrollIntoView({ behavior: 'smooth' });
+    if (reviewArea.value) reviewArea.value.scrollIntoView({ behavior: 'smooth' });
   },
 );
 

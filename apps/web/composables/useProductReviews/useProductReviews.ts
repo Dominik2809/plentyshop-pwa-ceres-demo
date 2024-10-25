@@ -8,6 +8,7 @@ import type {
   CreateProductReview,
 } from './types';
 import { reviewGetters } from '@plentymarkets/shop-api';
+import { ApiError } from '@plentymarkets/shop-api';
 
 /**
  * @description Composable managing product reviews data
@@ -24,6 +25,7 @@ export const useProductReviews: UseProductReviews = (itemId: number, productVari
     data: {} as Review,
     loading: false,
     review: {} as ReviewItem,
+    reviewArea: null,
     isReviewModalOpen: false,
     modalType: '',
   }));
@@ -42,31 +44,30 @@ export const useProductReviews: UseProductReviews = (itemId: number, productVari
   const fetchProductReviews: FetchProductReviews = async (itemId: number, variationId?: number) => {
     state.value.loading = true;
     const route = useRoute();
+    const config = useRuntimeConfig().public;
+
     try {
       const { data, error } = await useAsyncData(() =>
         useSdk().plentysystems.getReview({
           itemId: itemId,
+          feedbacksPerPage: config.defaultItemsPerPage,
           page: Number(route.query.feedbackPage) || 1,
         }),
       );
       useHandleError(error.value);
       state.value.data.feedbacks = data?.value?.data?.feedbacks ?? state.value.data.feedbacks;
       state.value.data.pagination = data?.value?.data?.pagination ?? state.value.data.pagination;
+      state.value.data.counts = data?.value?.data?.counts ?? state.value.data.counts;
       state.value.loading = false;
       return state.value.data;
     } catch (error: unknown) {
-      useHandleError({
-        statusCode: 500,
-        message: String(error),
-      });
+      useHandleError(error as ApiError);
     }
     return state.value.data;
   };
 
   const fetchReviews = async () => {
-    const { fetchProductReviewAverage } = useProductReviewAverage(itemId);
-
-    await Promise.all([fetchProductReviews(itemId, productVariationId), fetchProductReviewAverage(itemId)]);
+    await fetchProductReviews(itemId, productVariationId);
   };
 
   const createProductReview: CreateProductReview = async (params: CreateReviewParams) => {
@@ -78,7 +79,7 @@ export const useProductReviews: UseProductReviews = (itemId: number, productVari
     const { data, error } = await useAsyncData(() => useSdk().plentysystems.doReview(params));
     useHandleError(error.value);
     if (data.value?.data && typeof data.value.data === 'string') {
-      useHandleError({ message: data.value.data, statusCode: 500 });
+      send({ type: 'negative', message: data.value.data });
     } else {
       send({ type: 'positive', message: $i18n.t('review.notification.success') });
     }

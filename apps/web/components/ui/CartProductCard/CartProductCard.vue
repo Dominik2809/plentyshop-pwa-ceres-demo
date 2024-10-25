@@ -90,7 +90,7 @@
       <div class="items-start sm:items-center sm:mt-auto flex flex-col sm:flex-row">
         <span
           v-if="currentFullPrice"
-          class="text-secondary-500 sm:order-1 font-bold typography-text-sm sm:typography-text-lg sm:ml-auto"
+          class="text-secondary-600 sm:order-1 font-bold typography-text-sm sm:typography-text-lg sm:ml-auto"
         >
           {{ n(currentFullPrice || 0, 'currency') }}
         </span>
@@ -98,20 +98,21 @@
           :disabled="disabled"
           @change-quantity="debounceQuantity"
           :value="cartGetters.getItemQty(cartItem)"
-          :min-value="1"
+          :min-value="productGetters.getMinimumOrderQuantity(cartItem.variation || ({} as Product))"
           class="mt-4 sm:mt-0"
         />
       </div>
     </div>
 
     <div v-if="deleteLoading" class="absolute top-2 right-2 bg-white p-1.5">
-      <SfLoaderCircular />
+      <SfLoaderCircular aria-label="loading" />
     </div>
 
     <UiButton
       v-else-if="!disabled"
       @click="deleteItem"
       square
+      :aria-label="t('removeItemFromBasket')"
       variant="tertiary"
       size="sm"
       class="absolute top-2 right-2 bg-white"
@@ -138,9 +139,7 @@ const img = ref();
 const deleteLoading = ref(false);
 const emit = defineEmits(['load']);
 
-const props = withDefaults(defineProps<CartProductCardProps>(), {
-  disabled: false,
-});
+const { cartItem, disabled = false } = defineProps<CartProductCardProps>();
 
 onMounted(() => {
   const imgElement = (img.value?.$el as HTMLImageElement) || null;
@@ -160,25 +159,25 @@ onMounted(() => {
 const changeQuantity = async (quantity: string) => {
   await setCartItemQuantity({
     quantity: Number(quantity),
-    cartItemId: props.cartItem.id,
-    productId: props.cartItem.variationId,
+    cartItemId: cartItem.id,
+    productId: cartItem.variationId,
   });
 };
 const deleteItem = async () => {
   deleteLoading.value = true;
   await deleteCartItem({
-    cartItemId: props.cartItem.id,
+    cartItemId: cartItem.id,
   });
   send({ message: t('deletedFromCart'), type: 'positive' });
   deleteLoading.value = false;
 };
 
 const currentFullPrice = computed(() => {
-  return cartGetters.getCartItemPrice(props.cartItem) * cartGetters.getItemQty(props.cartItem);
+  return cartGetters.getCartItemPrice(cartItem) * cartGetters.getItemQty(cartItem);
 });
 const cartItemImage = computed(() => {
-  if (props.cartItem && props.cartItem.variation) {
-    return getImageForViewport(props.cartItem.variation, 'CartProductCard');
+  if (cartItem && cartItem.variation) {
+    return getImageForViewport(cartItem.variation, 'CartProductCard');
   }
   return '';
 });
@@ -189,9 +188,9 @@ const NuxtLink = resolveComponent('NuxtLink');
 
 const basePriceSingleValue = computed(
   () =>
-    productGetters.getGraduatedPriceByQuantity(props.cartItem.variation ?? ({} as Product), props.cartItem.quantity)
-      ?.basePrice ?? productGetters.getDefaultBasePrice(props.cartItem.variation ?? ({} as Product)),
+    productGetters.getGraduatedPriceByQuantity(cartItem.variation ?? ({} as Product), cartItem.quantity)?.basePrice ??
+    productGetters.getDefaultBasePrice(cartItem.variation ?? ({} as Product)),
 );
 
-const path = computed(() => localePath('/' + cartGetters.getProductPath(props.cartItem)));
+const path = computed(() => localePath('/' + cartGetters.getProductPath(cartItem)));
 </script>

@@ -77,7 +77,11 @@ export class ProductListPageObject extends PageObject {
   }
 
   goToProduct() {
-    this.products.first().wait(2000).click().wait(2000);
+    cy.intercept('/plentysystems/getProduct').as('getProduct');
+    cy.intercept('/plentysystems/getReview').as('getReview');
+    this.products.first().click();
+    cy.wait('@getProduct');
+    cy.wait('@getReview');
     return this;
   }
 }
