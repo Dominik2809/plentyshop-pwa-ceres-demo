@@ -85,8 +85,9 @@
               data-testid="place-order-button"
               class="w-full mb-4 md:mb-0 cursor-pointer"
             >
-              <template v-if="createOrderLoading">
+              <template v-if="createOrderLoading || navigationInProgress || processingOrder">
                 <SfLoaderCircular class="flex justify-center items-center" size="sm" />
+                {{ t(orderStep) }}
               </template>
               <template v-else>{{ t('buy') }}</template>
             </UiButton>
@@ -128,8 +129,8 @@ definePageMeta({
 const { send } = useNotification();
 const { t } = useI18n();
 const localePath = useLocalePath();
+const { loading: createOrderLoading, createOrder, step: orderStep, setStep: setOrderStep } = useMakeOrder();
 const { isLoading: navigationInProgress } = useLoadingIndicator();
-const { loading: createOrderLoading, createOrder } = useMakeOrder();
 const { shippingPrivacyAgreement } = useAdditionalInformation();
 const { checkboxValue: termsAccepted } = useAgreementCheckbox('checkoutGeneralTerms');
 const {
@@ -249,6 +250,7 @@ const handleRegularOrder = async () => {
 
   if (data?.order?.id) {
     clearCartItems();
+    setOrderStep('checkoutBuyButton.navigateToConfirmation');
     navigateTo(localePath(paths.confirmation + '/' + data.order.id + '/' + data.order.accessKey));
   }
 };
