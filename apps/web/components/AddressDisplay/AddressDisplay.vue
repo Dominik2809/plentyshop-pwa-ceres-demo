@@ -1,7 +1,10 @@
 <template>
   <div class="address-display">
     <p>
-      {{ `${userAddressGetters.getFirstName(address)} ${userAddressGetters.getLastName(address)}` }}
+      {{
+        userAddressGetters.getCompanyName(address) ||
+        `${userAddressGetters.getFirstName(address)} ${userAddressGetters.getLastName(address)}`
+      }}
     </p>
     <p>{{ userAddressGetters.getPhone(address) }}</p>
     <p>
@@ -17,7 +20,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { userAddressGetters } from '@plentymarkets/shop-sdk';
+import { userAddressGetters } from '@plentymarkets/shop-api';
 import type { AddressProps } from './types';
 defineProps<AddressProps>();
 </script>

@@ -1,9 +1,20 @@
-import type { CartItem } from '@plentymarkets/shop-api';
-import type { Cart, DoAddItemParams, SetCartItemQuantityParams, DeleteCartItemParams } from '@plentymarkets/shop-api';
-import { toRefs } from '@vueuse/shared';
-import { useSdk } from '~/sdk';
-import type { UseCartReturn, UseCartState, GetCart, AddToCart } from './types';
-import type { DeleteCartItem, SetCartItemQuantity } from './types';
+import {
+  type Cart,
+  DoAddItemParams,
+  SetCartItemQuantityParams,
+  DeleteCartItemParams,
+  CartItem,
+  CartItemError,
+} from '@plentymarkets/shop-api';
+import {
+  type UseCartReturn,
+  UseCartState,
+  type GetCart,
+  type AddToCart,
+  type AddItemsToCart,
+  type DeleteCartItem,
+  type SetCartItemQuantity,
+} from './types';
 
 const migrateVariationData = (oldCart: Cart, nextCart: Cart = {} as Cart): Cart => {
   if (!oldCart || !oldCart.items || !nextCart || !nextCart.items) {
@@ -28,6 +39,10 @@ const migrateVariationData = (oldCart: Cart, nextCart: Cart = {} as Cart): Cart 
   return nextCart;
 };
 
+const isCartItemError = (data: Cart | CartItemError): data is CartItemError => {
+  return 'availableStock' in data;
+};
+
 /**
  * @description Composable for managing cart.
  * @returns UseCartReturn
@@ -41,7 +56,9 @@ const migrateVariationData = (oldCart: Cart, nextCart: Cart = {} as Cart): Cart 
 export const useCart: UseCartReturn = () => {
   const state = useState<UseCartState>('useCart', () => ({
     data: {} as Cart,
+    useAsShippingAddress: true,
     loading: false,
+    lastUpdatedCartItem: {} as CartItem,
   }));
 
   /**
@@ -103,11 +120,47 @@ export const useCart: UseCartReturn = () => {
    */
   const addToCart: AddToCart = async (params: DoAddItemParams) => {
     state.value.loading = true;
+
     try {
       const { data, error } = await useAsyncData(() => useSdk().plentysystems.doAddCartItem(params));
 
       useHandleError(error.value);
       state.value.data = migrateVariationData(state.value.data, data?.value?.data) ?? state.value.data;
+
+      const item = state?.value?.data?.items?.find((item) => item.variationId === params.productId);
+
+      if (item) {
+        state.value.lastUpdatedCartItem = item;
+      }
+
+      return !!data.value;
+    } catch (error) {
+      throw new Error(error as string);
+    } finally {
+      state.value.loading = false;
+    }
+  };
+
+  /**
+   * @description Function for adding multiple cart items.
+   * @param params { DoAddItemParams[] }
+   * @example
+   * ``` ts
+   * addItemsToCart([{
+   *     productId: 1,
+   *     quantity: 1,
+   * }]);
+   * ```
+   */
+  const addItemsToCart: AddItemsToCart = async (params: DoAddItemParams[]) => {
+    state.value.loading = true;
+
+    try {
+      const { data, error } = await useAsyncData(() => useSdk().plentysystems.doAddCartItems(params));
+
+      useHandleError(error.value);
+      state.value.data = migrateVariationData(state.value.data, data?.value?.data) ?? state.value.data;
+
       return !!data.value;
     } catch (error) {
       throw new Error(error as string);
@@ -138,9 +191,19 @@ export const useCart: UseCartReturn = () => {
           cartItemId: params.cartItemId,
         }),
       );
+
       useHandleError(error.value);
 
-      state.value.data = migrateVariationData(state.value.data, data?.value?.data) ?? state.value.data;
+      if (isCartItemError(data.value?.data as unknown as Cart | CartItemError)) {
+        const { $i18n } = useNuxtApp();
+        const { send } = useNotification();
+        const responseData = data?.value?.data as CartItemError;
+        state.value.data.itemQuantity = responseData.availableStock;
+
+        send({ message: $i18n.t('storefrontError.cart.reachedMaximumQuantity'), type: 'warning' });
+      } else {
+        state.value.data = migrateVariationData(state.value.data, data?.value?.data as Cart) ?? state.value.data;
+      }
 
       return state.value.data;
     } catch (error) {
@@ -180,13 +243,17 @@ export const useCart: UseCartReturn = () => {
     }
   };
 
+  const cartIsEmpty = computed(() => !state.value.data?.items?.length);
+
   return {
     setCart,
     clearCartItems,
     setCartItemQuantity,
     addToCart,
+    addItemsToCart,
     deleteCartItem,
     getCart,
+    cartIsEmpty,
     ...toRefs(state.value),
   };
 };

@@ -71,14 +71,17 @@ export class ProductListPageObject extends PageObject {
 
   addToCart() {
     this.products.find(`[data-testid="add-to-basket-short"]`).first().click();
+    cy.wait(1000)
+    cy.getByTestId('quick-checkout-close').click()
     return this;
   }
 
   goToProduct() {
     cy.intercept('/plentysystems/getProduct').as('getProduct');
+    cy.intercept('/plentysystems/getReview').as('getReview');
     this.products.first().click();
     cy.wait('@getProduct');
-
-    return this
+    cy.wait('@getReview');
+    return this;
   }
 }

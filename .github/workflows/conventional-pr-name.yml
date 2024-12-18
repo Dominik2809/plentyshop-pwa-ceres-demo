@@ -19,7 +19,7 @@ jobs:
         run: corepack enable
 
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.5'
           cache: 'yarn'
@@ -38,6 +38,9 @@ jobs:
             yarn config set npmScopes.plentymarkets.npmAuthToken $NODE_AUTH_TOKEN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create .env file
+        run: touch apps/web/.env
 
       - name: Install Dependencies
         run: yarn --frozen-lockfile

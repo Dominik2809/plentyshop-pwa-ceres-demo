@@ -1,12 +1,7 @@
 <template>
   <NuxtLayout name="auth" :heading="''">
-    <div class="text-lg text-center font-medium">
-      <span v-if="isLogin">{{ $t('auth.login.heading') }}</span>
-      <span v-else>{{ $t('auth.signup.heading') }}</span>
-    </div>
-
-    <LoginComponent v-if="isLogin" @change-view="isLogin = false" @logged-in="returnToPreviousPage" />
-    <register v-else @change-view="isLogin = true" @registered="returnToPreviousPage" />
+    <LoginComponent v-if="isLogin" @change-view="isLogin = false" @logged-in="navigateAfterAuth" />
+    <Register v-else @change-view="isLogin = true" @registered="navigateAfterAuth" />
   </NuxtLayout>
 </template>
 
@@ -15,11 +10,18 @@ definePageMeta({
   layout: false,
 });
 
-import { useRouter } from 'vue-router';
 const router = useRouter();
-const returnToPreviousPage = () => {
+const localePath = useLocalePath();
+const isLogin = ref(true);
+
+const navigateAfterAuth = () => {
+  const redirectUrl = router.currentRoute.value.query.redirect as string;
+
+  if (redirectUrl) {
+    router.push(localePath(redirectUrl));
+    return;
+  }
+
   router.go(-1);
 };
-
-const isLogin = ref(true);
 </script>

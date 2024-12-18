@@ -1,12 +1,22 @@
 import { createSharedComposable } from '@vueuse/core';
 import type { CategoryTreeItem } from '@plentymarkets/shop-api';
-import { categoryTreeGetters } from '@plentymarkets/shop-sdk';
-export const useLocalization = createSharedComposable(() => {
-  const isOpen = ref(false);
-  const toggle = () => {
-    isOpen.value = !isOpen.value;
-  };
+import { categoryTreeGetters } from '@plentymarkets/shop-api';
+import { useDisclosure } from '@storefront-ui/vue';
 
+const setVsfLocale = (locale: string) => {
+  const { $i18n } = useNuxtApp();
+  const { setLocaleCookie } = $i18n;
+  const DAYS = 100;
+  const localeExpireDate = new Date();
+  localeExpireDate.setDate(new Date().getDate() + DAYS);
+  const vsfLocale = useCookie('vsf-locale', { expires: localeExpireDate });
+
+  setLocaleCookie(locale);
+  vsfLocale.value = locale;
+};
+
+export const useLocalization = createSharedComposable(() => {
+  const { isOpen: isOpen, toggle } = useDisclosure();
   /**
    * @description Function for wrapping the category language path.
    *
@@ -94,14 +104,19 @@ export const useLocalization = createSharedComposable(() => {
    * @example switchLocale('en')
    */
   const switchLocale = async (language: string) => {
-    const { $i18n } = useNuxtApp();
-    const { setLocaleCookie } = $i18n;
-
+    const { getCart } = useCart();
     const switchLocalePath = useSwitchLocalePath();
     const route = useRoute();
-    setLocaleCookie(language);
+
+    setVsfLocale(language);
     toggle();
-    await navigateTo({ path: switchLocalePath(language), query: route.query });
+    await getCart().then(
+      async () =>
+        await navigateTo({
+          path: switchLocalePath(language),
+          query: route.query,
+        }),
+    );
   };
 
   return {
@@ -112,5 +127,6 @@ export const useLocalization = createSharedComposable(() => {
     isOpen,
     toggle,
     switchLocale,
+    setVsfLocale,
   };
 });

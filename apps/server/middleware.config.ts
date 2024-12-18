@@ -16,6 +16,15 @@ const config = {
           debug: true,
         },
       },
+      errorHandler: (error: any, req: any, res: any) => {
+        // override the default error handler to preserve the original error response
+        // https://docs.alokai.com/middleware/guides/custom-error-handler#customize-the-error-handler
+        if (error?.response?.status) {
+          res.status(error.response.status).send(error.response?.data);
+        } else {
+          res.status(500).send(error);
+        }
+      },
     },
   },
 };

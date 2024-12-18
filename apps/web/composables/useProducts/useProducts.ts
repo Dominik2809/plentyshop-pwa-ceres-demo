@@ -1,8 +1,7 @@
-import type { FacetSearchCriteria, Product } from '@plentymarkets/shop-api';
-import type { Facet } from '@plentymarkets/shop-api';
-import { defaults, type SelectVariation } from '~/composables';
-import type { FetchProducts, UseProductsReturn, UseProductsState } from '~/composables/useProducts/types';
-import { useSdk } from '~/sdk';
+import { FacetSearchCriteria, Product } from '@plentymarkets/shop-api';
+import { Facet } from '@plentymarkets/shop-api';
+import { defaults, type SetCurrentProduct } from '~/composables';
+import { type FetchProducts, type UseProductsReturn, UseProductsState } from '~/composables/useProducts/types';
 
 /**
  * @description Composable for managing products.
@@ -13,11 +12,11 @@ import { useSdk } from '~/sdk';
  * ```
  */
 export const useProducts: UseProductsReturn = () => {
-  const state = useState<UseProductsState>('products', () => ({
+  const state = useState<UseProductsState>('useProducts', () => ({
     data: {} as Facet,
     loading: false,
     productsPerPage: defaults.DEFAULT_ITEMS_PER_PAGE,
-    selectedVariation: {} as Product,
+    currentProduct: {} as Product,
   }));
 
   /**
@@ -34,13 +33,17 @@ export const useProducts: UseProductsReturn = () => {
    */
   const fetchProducts: FetchProducts = async (params: FacetSearchCriteria) => {
     state.value.loading = true;
+
+    if (params.categoryUrlPath?.endsWith('.js')) return state.value.data;
+
     const { data } = await useAsyncData(() => useSdk().plentysystems.getFacet(params));
 
     state.value.productsPerPage = params.itemsPerPage || defaults.DEFAULT_ITEMS_PER_PAGE;
 
-    if (data.value) data.value.data.pagination.perPageOptions = defaults.PER_PAGE_STEPS;
-
-    state.value.data = data.value?.data ?? state.value.data;
+    if (data.value?.data) {
+      data.value.data.pagination.perPageOptions = defaults.PER_PAGE_STEPS;
+      state.value.data = data.value.data;
+    }
 
     if (state.value.data?.facets?.length) {
       state.value.data.facets = state.value.data.facets.filter((facet) => facet.id !== 'feedback');
@@ -51,25 +54,25 @@ export const useProducts: UseProductsReturn = () => {
   };
 
   /**
-   * @description Function for selecting a variation.
+   * @description Function for setting the current product.
    * @param product { Product }
-   * @return SelectVariation
+   * @return SetCurrentProduct
    * @example
    * ``` ts
-   *  selectVariation({} as Product)
+   *  setCurrentProduct({} as Product)
    * ```
    */
-  const selectVariation: SelectVariation = async (product: Product) => {
+  const setCurrentProduct: SetCurrentProduct = async (product: Product) => {
     state.value.loading = true;
 
-    state.value.selectedVariation = product;
+    state.value.currentProduct = product;
 
     state.value.loading = false;
   };
 
   return {
     fetchProducts,
-    selectVariation,
+    setCurrentProduct,
     ...toRefs(state.value),
   };
 };

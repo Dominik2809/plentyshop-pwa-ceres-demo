@@ -9,7 +9,7 @@
       <form data-testid="contact-form" class="flex flex-col rounded-md gap-4" @submit.prevent="onSubmit" novalidate>
         <div class="">
           <label>
-            <UiFormLabel class="mb-1">{{ t('contact.form.nameLabel') }} *</UiFormLabel>
+            <UiFormLabel class="mb-1">{{ t('contact.form.nameLabel') }} {{ t('form.required') }}</UiFormLabel>
             <SfInput
               v-bind="nameAttributes"
               name="name"
@@ -18,11 +18,11 @@
               :invalid="Boolean(errors['name'])"
             />
           </label>
-          <VeeErrorMessage as="div" name="name" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
+          <ErrorMessage as="div" name="name" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </div>
         <div class="">
           <label>
-            <UiFormLabel class="mb-1">{{ t('contact.form.emailLabel') }} *</UiFormLabel>
+            <UiFormLabel class="mb-1">{{ t('contact.form.emailLabel') }} {{ t('form.required') }}</UiFormLabel>
 
             <SfInput
               name="email"
@@ -37,20 +37,22 @@
               </template>
             </SfInput>
           </label>
-          <VeeErrorMessage as="div" name="email" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
+          <ErrorMessage as="div" name="email" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </div>
         <label>
-          <UiFormLabel class="mb-1">{{ t('contact.form.subjectLabel') }}</UiFormLabel>
-          <SfInput name="subject" type="text" v-model="contact.subject" />
+          <UiFormLabel class="mb-1">{{ t('contact.form.subjectLabel') }} {{ t('form.required') }}</UiFormLabel>
+          <SfInput name="subject" type="text" v-model="subject" v-bind="subjectAttributes" />
+          <ErrorMessage as="div" name="subject" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </label>
         <label>
-          <UiFormLabel class="mb-1">{{ t('contact.form.order-id') }}</UiFormLabel>
-          <SfInput name="order-id" type="text" v-model="contact.orderId" />
+          <UiFormLabel class="mb-1">{{ t('contact.form.order-id') }} {{ t('form.required') }}</UiFormLabel>
+          <SfInput name="order-id" type="text" v-model="orderId" v-bind="orderIdAttributes" />
+          <ErrorMessage as="div" name="orderId" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </label>
 
         <div>
           <label class="flex flex-col">
-            <UiFormLabel class="mb-1">{{ t('contact.form.message') }} *</UiFormLabel>
+            <UiFormLabel class="mb-1">{{ t('contact.form.message') }} {{ t('form.required') }}</UiFormLabel>
             <SfTextarea
               :placeholder="t('contact.form.message-placeholder')"
               class="w-full"
@@ -61,8 +63,7 @@
               required
             />
           </label>
-
-          <VeeErrorMessage as="div" name="message" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
+          <ErrorMessage as="div" name="message" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </div>
 
         <div>
@@ -80,7 +81,7 @@
               class="ml-3 text-base text-neutral-900 cursor-pointer peer-disabled:text-disabled-900 select-none"
               for="terms"
             >
-              <i18n-t keypath="contact.privacyPolicy">
+              <i18n-t keypath="contact.privacyPolicy" scope="global">
                 <template #privacyPolicy>
                   <SfLink
                     :href="localePath(paths.privacyPolicy)"
@@ -91,25 +92,24 @@
                   </SfLink>
                 </template>
               </i18n-t>
-              *
+              {{ t('form.required') }}
             </label>
           </div>
-
-          <VeeErrorMessage as="div" name="privacyPolicy" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
+          <ErrorMessage as="div" name="privacyPolicy" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </div>
 
-        <p class="text-sm text-neutral-500 mb-2">* {{ t('contact.form.asterixHint') }}</p>
+        <p class="text-sm text-neutral-500 mb-2">{{ t('form.required') }} {{ t('contact.form.asterixHint') }}</p>
 
         <div class="md:col-span-3 flex flex-col-reverse md:flex-row justify-end gap-4">
-          <SfButton type="button" variant="secondary" :disabled="isContactLoading" @click="clearInputs">
+          <UiButton type="button" variant="secondary" :disabled="isContactLoading" @click="clearInputs">
             {{ t('contact.clearAll') }}
-          </SfButton>
-          <SfButton data-testid="save-address" type="submit" class="min-w-[120px]" :disabled="isContactLoading">
+          </UiButton>
+          <UiButton data-testid="save-address" type="submit" class="min-w-[120px]" :disabled="isContactLoading">
             <SfLoaderCircular v-if="isContactLoading" class="flex justify-center items-center" size="sm" />
             <span v-else>
               {{ t('contact.contactSend') }}
             </span>
-          </SfButton>
+          </UiButton>
         </div>
 
         <div>
@@ -121,8 +121,7 @@
             :options="{ theme: 'light' }"
             class="mt-4"
           />
-
-          <VeeErrorMessage as="div" name="turnstile" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
+          <ErrorMessage as="div" name="turnstile" class="text-negative-700 text-left text-sm pt-[0.2rem]" />
         </div>
       </form>
     </div>
@@ -130,9 +129,11 @@
 </template>
 
 <script setup lang="ts">
-import { SfButton, SfInput, SfCheckbox, SfLink, SfTextarea, SfLoaderCircular, SfIconEmail } from '@storefront-ui/vue';
+import { SfInput, SfCheckbox, SfLink, SfTextarea, SfLoaderCircular, SfIconEmail } from '@storefront-ui/vue';
 import { boolean, object, string } from 'yup';
-import { useForm } from 'vee-validate';
+import { useForm, ErrorMessage } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/yup';
+import { paths } from '~/utils/paths';
 
 definePageMeta({
   layout: false,
@@ -152,6 +153,15 @@ const validationSchema = toTypedSchema(
     name: string().required(t('errorMessages.contact.nameRequired')).default(''),
     email: string().email(t('errorMessages.email.valid')).required(t('errorMessages.email.required')).default(''),
     message: string().required(t('errorMessages.contact.messageRequired')).default(''),
+    subject: string().required(t('errorMessages.requiredField')).default(''),
+    orderId: string()
+      .required(t('errorMessages.requiredField'))
+      .test((value, context) => {
+        if (value && /\D/.test(value)) {
+          return context.createError({ message: t('errorMessages.wholeNumber') });
+        }
+        return true;
+      }),
     privacyPolicy: boolean().oneOf([true], t('errorMessages.contact.termsRequired')).default(false),
     turnstile: string().required(t('errorMessages.contact.turnstileRequired')).default(''),
   }),
@@ -163,23 +173,18 @@ const { errors, meta, defineField, handleSubmit, resetForm } = useForm({
 
 const [name, nameAttributes] = defineField('name');
 const [email, emailAttributes] = defineField('email');
+const [subject, subjectAttributes] = defineField('subject');
+const [orderId, orderIdAttributes] = defineField('orderId');
 const [message, messageAttributes] = defineField('message');
 const [privacyPolicy, privacyPolicyAttributes] = defineField('privacyPolicy');
 const [turnstile, turnstileAttributes] = defineField('turnstile');
 
-const defaultContact = ref({
-  subject: '',
-  orderId: '',
-});
-
-const contact = ref({ ...defaultContact.value });
-
 const clearInputs = () => {
-  contact.value = { ...defaultContact.value };
-
   name.value = '';
   email.value = '';
   message.value = '';
+  orderId.value = '';
+  subject.value = '';
   privacyPolicy.value = false;
 };
 
@@ -191,19 +196,19 @@ const sendContact = async () => {
   const params = {
     name: name?.value || '',
     email: email?.value || '',
-    subject: contact.value.subject || '',
-    orderId: contact.value.orderId || '',
+    subject: subject?.value || '',
+    orderId: orderId?.value || '',
     message: message.value || '',
     'cf-turnstile-response': turnstile.value,
   };
 
-  doCustomerContactMail(params);
-
-  send({
-    type: 'positive',
-    message: t('contact.success'),
-  });
-  resetForm();
+  if (await doCustomerContactMail(params)) {
+    send({
+      type: 'positive',
+      message: t('contact.success'),
+    });
+    resetForm();
+  }
 
   turnstile.value = '';
   turnstileElement.value?.reset();
