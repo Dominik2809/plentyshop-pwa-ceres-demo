@@ -7,7 +7,6 @@ import type {
   PayPalGetOrderDetailsParams,
 } from '@plentymarkets/shop-api';
 import { paypalGetters } from '@plentymarkets/shop-api';
-import { PayPalLoadScript, PayPalScript } from '~/composables';
 
 const localeMap: Record<string, string> = { de: 'de_DE' };
 const getLocaleForPayPal = (locale: string): string => localeMap[locale] || 'en_US';
@@ -86,7 +85,6 @@ export const usePayPal = () => {
           commit: commit,
         });
       } catch {
-        // eslint-disable-next-line unicorn/expiring-todo-comments
         // TODO: Handle error (not loading sdk)
       }
     }
@@ -122,7 +120,7 @@ export const usePayPal = () => {
         return paypalScript;
       })
       .finally(() => {
-        delete state.value.loadingScripts[scriptKey];
+        delete state.value.loadingScripts.scriptKey;
       });
 
     return state.value.loadingScripts[scriptKey];
@@ -180,7 +178,7 @@ export const usePayPal = () => {
    * @example
    * ``` ts
    * executeOrder({
-   *   mode: 'paypal',
+   *   mode: 'PAYPAL',
    *   plentyOrderId: 1234,
    *   paypalTransactionId: 'UHIhhur3h2rh2',
    * });

@@ -9,28 +9,20 @@
       <div class="col-span-6 xl:col-span-7 mb-10 lg:mb-0">
         <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" />
         <ContactInformation />
-        <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" id="top-shipping-divider" />
-        <AddressContainer :type="AddressType.Shipping" :key="0" id="shipping-address" />
-        <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" id="top-billing-divider" />
-        <AddressContainer :type="AddressType.Billing" :key="1" id="billing-address" />
-        <UiDivider class-name="w-screen md:w-auto -mx-4 md:mx-0" id="bottom-billing-divider" />
+        <UiDivider id="top-shipping-divider" class="w-screen md:w-auto -mx-4 md:mx-0" />
+        <AddressContainer id="shipping-address" :key="0" :type="AddressType.Shipping" />
+        <UiDivider id="top-billing-divider" class="w-screen md:w-auto -mx-4 md:mx-0" />
+        <AddressContainer id="billing-address" :key="1" :type="AddressType.Billing" />
+        <UiDivider id="bottom-billing-divider" class-name="w-screen md:w-auto -mx-4 md:mx-0" />
         <div class="relative" :class="{ 'pointer-events-none opacity-50': disableShippingPayment }">
-          <ShippingMethod
-            :shipping-methods="shippingMethods"
-            :disabled="disableShippingPayment"
-            @update:shipping-method="handleShippingMethodUpdate"
-          />
+          <ShippingMethod :disabled="disableShippingPayment" @update:shipping-method="handleShippingMethodUpdate" />
           <SfLoaderCircular
             v-if="disableShippingPayment"
             class="absolute mt-5 right-0 left-0 m-auto z-[999]"
             size="2xl"
           />
           <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0" />
-          <CheckoutPayment
-            :payment-methods="paymentMethods"
-            :disabled="disableShippingPayment"
-            @update:active-payment="handlePaymentMethodUpdate"
-          />
+          <CheckoutPayment :disabled="disableShippingPayment" @update:active-payment="handlePaymentMethodUpdate" />
         </div>
         <UiDivider class="w-screen md:w-auto -mx-4 md:mx-0 mb-10" />
         <CheckoutGeneralTerms />
@@ -43,29 +35,23 @@
           <SfLoaderCircular v-if="cartLoading" class="absolute top-[130px] right-0 left-0 m-auto z-[999]" size="2xl" />
           <Coupon />
           <OrderSummary v-if="cart" :cart="cart" class="mt-4">
-            <client-only v-if="selectedPaymentId === paypalPaymentId">
+            <div v-if="selectedPaymentId === paypalPaymentId">
               <PayPalExpressButton
                 :disabled="!termsAccepted || disableBuyButton"
-                @validation-callback="handleReadyToBuy"
                 type="Checkout"
+                @validation-callback="handleReadyToBuy"
               />
               <PayPalPayLaterBanner
                 placement="payment"
                 :amount="cartGetters.getTotal(cartGetters.getTotals(cart))"
                 :commit="true"
               />
-            </client-only>
-            <UiButton
+            </div>
+            <PayPalCreditCardBuyButton
               v-else-if="selectedPaymentId === paypalCreditCardPaymentId"
-              type="submit"
-              data-testid="place-order-button"
-              @click="openPayPalCardDialog"
               :disabled="disableBuyButton || paypalCardDialog"
-              size="lg"
-              class="w-full mb-4 md:mb-0 cursor-pointer"
-            >
-              {{ t('buy') }}
-            </UiButton>
+              @click="openPayPalCardDialog"
+            />
             <PayPalApplePayButton
               v-else-if="selectedPaymentId === paypalApplePayPaymentId"
               :style="disableBuyButton ? 'pointer-events: none;' : ''"
@@ -79,17 +65,18 @@
             <UiButton
               v-else
               type="submit"
-              @click="order"
               :disabled="disableBuyButton"
               size="lg"
               data-testid="place-order-button"
               class="w-full mb-4 md:mb-0 cursor-pointer"
+              @click="order"
             >
               <template v-if="createOrderLoading">
                 <SfLoaderCircular class="flex justify-center items-center" size="sm" />
               </template>
               <template v-else>{{ t('buy') }}</template>
             </UiButton>
+            <ModuleComponentRendering area="checkout.afterBuyButton" />
           </OrderSummary>
         </div>
       </div>
@@ -117,7 +104,7 @@ import {
   PayPalApplePayKey,
 } from '~/composables/usePayPal/types';
 import { AddressType, paymentProviderGetters, cartGetters } from '@plentymarkets/shop-api';
-import { PayPalAddToCartCallback } from '~/components/PayPal/types';
+import type { PayPalAddToCartCallback } from '~/components/PayPal/types';
 
 definePageMeta({
   layout: 'simplified-header-and-footer',
@@ -151,7 +138,6 @@ const {
   loadPayment,
   loadShipping,
   paymentMethods,
-  shippingMethods,
   selectedPaymentId,
   handleShippingMethodUpdate,
   handlePaymentMethodUpdate,
@@ -244,7 +230,7 @@ const openPayPalCardDialog = async () => {
 const handleRegularOrder = async () => {
   const data = await createOrder({
     paymentId: paymentMethods.value.selected,
-    shippingPrivacyHintAccepted: shippingPrivacyAgreement.value,
+    additionalInformation: { shippingPrivacyHintAccepted: shippingPrivacyAgreement.value },
   });
 
   if (data?.order?.id) {

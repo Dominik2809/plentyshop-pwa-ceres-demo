@@ -15,6 +15,11 @@
     },
     "essentials": {
       "cookies": {
+        "payPal": {
+          "name": "paypal",
+          "provider": "PayPal (Europe) S.à r.l. et Cie, S.C.A.",
+          "status": "Required for PayPal payments."
+        },
         "cloudflareTurnstile": {
           "name": "Cloudflare Turnstile",
           "provider": "Cloudflare",
@@ -341,7 +346,8 @@
   "checkoutPayment": {
     "comingSoon": "Coming soon",
     "creditCard": "Credit Card",
-    "heading": "Payment method"
+    "heading": "Payment method",
+    "noMethodsAvailable": "There are no payment methods available. Please contact the webshop provider."
   },
   "clear": "Clear",
   "clearFilters": "Clear all filters",
@@ -529,7 +535,7 @@
   },
   "estimatedTax": "VAT",
   "etaDelivery": "Estimated delivery time",
-  "excludedShipping": "excl. Shipping",
+  "excludedShipping": "excl. {shipping}",
   "failedInfoHeader": "We are really sorry.",
   "failedInfoMessage": "Your order has not been completed.",
   "filters": "Filters",
@@ -584,6 +590,9 @@
   "home": "Home",
   "homepage": {
     "background": "New Wireless Pro headphones with sleek design and modern features",
+    "emptyBlock": {
+      "headline": "Add the first block here."
+    },
     "banner": {
       "moto1": "Feel the music",
       "moto2": "New Wireless Pro",
@@ -674,7 +683,9 @@
     "noResponsibleInformation": "No information available for Responsible Person",
     "responsibleHeader": "Responsible Person in the EU",
     "responsibleSubtitle": "An economic operator based within the EU who ensures that the product complies with all necessary regulations.",
-    "subtitle": "Manufacturer information includes the address and additional details about the producer of the product."
+    "subtitle": "Manufacturer information includes the address and additional details about the producer of the product.",
+    "contactUrl": "Contact form",
+    "responsibleContactUrl": "EU-Responsible contact form"
   },
   "max": "Max",
   "min": "Min",
@@ -707,7 +718,8 @@
     "declineOffer": "Decline offer",
     "inputPlaceholder": "Please share your reason for declining...",
     "missingEmail": "No email address has been provided.",
-    "offer": "Offer"
+    "offer": "Offer",
+    "offerValidUntil": "Offer valid until: {date}"
   },
   "openConfigurationDrawer": "Open configuration drawer",
   "openSearchModalButtonLabel": "Open item search",
@@ -767,7 +779,8 @@
     "unbrandedCvv": "CVV",
     "unbrandedExpirationDate": "Expiration date",
     "unbrandedNameOnCard": "Name on card",
-    "unbrandedPay": "Pay"
+    "unbrandedPay": "Pay",
+    "invalidOrder": "The order cannot be processed. Please try again."
   },
   "perPage": "Per page",
   "phone": "Phone",
@@ -782,7 +795,7 @@
   "procentageSavings": "You save {percent} % on this bundle",
   "productAttributes": {
     "notValidVariation": "Please select a valid variation.",
-    "productInformationMissing": "Product information missing",
+    "productNameMissing": "Product name missing",
     "seeAvailableOptions": "See available options"
   },
   "productDetails": "Product details",
@@ -795,7 +808,8 @@
     "cartContains": "Your cart contains {count} item | Your cart contains {count} items",
     "checkYourCart": "Check your cart",
     "heading": "Added to shopping cart",
-    "subTotal": "Items subtotal"
+    "subTotal": "Items subtotal",
+    "quantity": "Quantity"
   },
   "readLess": "Read less",
   "readMore": "Read more",
@@ -881,7 +895,9 @@
     "description": "Not available until a shipping address is provided.",
     "free": "Free",
     "heading": "Shipping method",
-    "showDataPrivacyAgreementHint": "I agree that my email address and my phone number will be transmitted to {parcelServiceInformation}, so that they can contact me via email or phone in order to determine a delivery date or to communicate status information about the delivery of the shipment. I can revoke this agreement at any time."
+    "noMethodsAvailable": "There are no shipping methods available. Please contact the webshop provider.",
+    "showDataPrivacyAgreementHint": "I agree that my email address and my phone number will be transmitted to {parcelServiceInformation}, so that they can contact me via email or phone in order to determine a delivery date or to communicate status information about the delivery of the shipment. I can revoke this agreement at any time.",
+    "maxDeliveryDays": "Delivery within {days} days"
   },
   "showAllReviews": "Show all reviews",
   "showLess": "Show less",
@@ -907,12 +923,27 @@
     "reviewsUp": "Item reviews ⬆"
   },
   "storefrontError": {
+    "offer": {
+      "expired": "This offer has expired",
+      "openUnauthorized": "You are not authorised to open this offer.",
+      "itemOutOfStock": "At least one item in the offer is no longer in stock.",
+      "alreadyTaken": "This offer has already been used and cannot be used again."
+    },
     "address": {
       "createFailed": "Saving the address has failed.",
       "deleteFailed": "The deletion of the address failed.",
       "validationFailed": "The address is invalid."
     },
     "cart": {
+      "addToBasket": {
+        "itemSetComponentMismatch": "There is a mismatch in the item set components, and it cannot be added to the cart.",
+        "maxItemQuantityReached": "The maximum quantity for this item has been reached and it cannot be added to the cart.",
+        "maxVariationQuantityReached": "The maximum quantity for this variant has been reached and it cannot be added to the cart.",
+        "minVariationQuantityNotReached": "The minimum quantity for this variant has not been reached and cannot be added to the cart.",
+        "notEnoughStockForVariation": "There is insufficient stock available for this variant.",
+        "unknownError": "An unknown error occurred while adding the item. Please try again.",
+        "variationNotFound": "The selected variant was not found and cannot be added to the cart."
+      },
       "failedToRemoveItem": "The item could not be removed.",
       "reachedMaximumQuantity": "Your order exceeds the maximum order quantity of this item."
     },
@@ -971,5 +1002,6 @@
     "add": "The item was added to your wish list.",
     "delete": "The item was removed from your wish list."
   },
-  "youAreOfflineText": "It seems you are currently offline, check your internet connection"
+  "youAreOfflineText": "It seems you are currently offline, check your internet connection",
+  "double-tap-zoom": "Double-tap to zoom"
 }

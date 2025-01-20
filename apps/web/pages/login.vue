@@ -8,20 +8,17 @@
 <script setup lang="ts">
 definePageMeta({
   layout: false,
+  middleware: ['guest-guard'],
 });
 
 const router = useRouter();
 const localePath = useLocalePath();
 const isLogin = ref(true);
 
-const navigateAfterAuth = () => {
+const navigateAfterAuth = (skipReload: boolean) => {
   const redirectUrl = router.currentRoute.value.query.redirect as string;
-
-  if (redirectUrl) {
-    router.push(localePath(redirectUrl));
-    return;
+  if (redirectUrl && !skipReload) {
+    window.location.href = localePath(redirectUrl);
   }
-
-  router.go(-1);
 };
 </script>

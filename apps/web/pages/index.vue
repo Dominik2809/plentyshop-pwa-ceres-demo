@@ -1,42 +1,86 @@
 <template>
-  <Editor v-if="isEditing" />
-  <div v-else class="content">
-    <UiHeroCarousel :hero-item-props="formattedHeroItems" />
-
-    <NuxtLazyHydrate when-visible>
-      <div class="max-w-screen-3xl mx-auto md:px-6 lg:px-10 mb-10">
-        <UiMediaCard
-          v-for="(item, index) in mediaData"
-          :key="index"
-          :image="item.image"
-          :alt="item.alt"
-          :text="item.text"
-          :alignment="item.alignment"
+  <div>
+    <EmptyBlock v-if="dataIsEmpty" @add-new-block="addNewBlock(0, 1)" />
+    <Editor
+      v-if="isEditing && currentBlockIndex !== null"
+      :index="currentBlockIndex"
+      :block="currentBlock"
+      @update="updateBlock"
+    />
+    <div v-else class="content">
+      <template v-for="(block, index) in data.blocks" :key="index">
+        <PageBlock
+          :index="index"
+          :block="block"
+          :is-preview="isPreview"
+          :disable-actions="disableActions"
+          :is-clicked="isClicked"
+          :clicked-block-index="clickedBlockIndex"
+          :is-tablet="isTablet"
+          :block-has-data="blockHasData"
+          :get-component="getComponent"
+          :tablet-edit="tabletEdit"
+          :add-new-block="addNewBlock"
+          :handle-edit="handleEdit"
+          :delete-block="deleteBlock"
         />
-      </div>
-    </NuxtLazyHydrate>
-
-    <div class="max-w-screen-3xl mx-auto md:px-6 lg:px-10 mb-10">
-      <NuxtLazyHydrate when-visible>
-        <section class="mb-10 overflow-hidden">
-          <p data-testid="recommended-products" class="mb-4 typography-text-lg text-center md:text-left">
-            {{ t('moreItemsOfThisCategory') }}
-          </p>
-          <ProductRecommendedProducts cache-key="homepage" :category-id="recommendedProductsCategoryId" />
-        </section>
-      </NuxtLazyHydrate>
-      <NuxtLazyHydrate when-visible>
-        <NewsletterSubscribe v-if="showNewsletter" />
-      </NuxtLazyHydrate>
+      </template>
     </div>
   </div>
 </template>
+<script lang="ts" setup>
+import homepageTemplateDataEn from '../composables/useHomepage/homepageTemplateDataEn.json';
+import homepageTemplateDataDe from '../composables/useHomepage/homepageTemplateDataDe.json';
 
-<script lang="ts" setup async>
-const isEditing = useEditor();
-const { formattedHeroItems, mediaData, recommendedProductsCategoryId } = await useHomepageData();
-definePageMeta({ pageType: 'static', middleware: ['newsletter-confirmation'] });
+const {
+  currentBlock,
+  currentBlockIndex,
+  isClicked,
+  clickedBlockIndex,
+  isTablet,
+  isPreview,
+  blockHasData,
+  tabletEdit,
+  handleEdit,
+  deleteBlock,
+  updateBlock,
+} = useBlockManager();
 
-const { showNewsletter } = useNewsletter();
-const { t } = useI18n();
+const { data, initialBlocks, fetchPageTemplate, dataIsEmpty } = useHomepage();
+const { $i18n } = useNuxtApp();
+const { isEditing, isEditingEnabled, disableActions } = useEditor();
+
+const defaultAddBlock = (lang: string) => {
+  return lang === 'en' ? homepageTemplateDataEn.blocks[1] : homepageTemplateDataDe.blocks[1];
+};
+
+const addNewBlock = (index: number, position: number) => {
+  const insertIndex = position === -1 ? index : index + 1;
+  const updatedBlocks = [...data.value.blocks];
+
+  updatedBlocks.splice(insertIndex, 0, defaultAddBlock($i18n.locale.value));
+
+  data.value.blocks = updatedBlocks;
+
+  isEditingEnabled.value = !deepEqual(initialBlocks.value, data.value.blocks);
+};
+
+const runtimeConfig = useRuntimeConfig();
+const isHero = ref(runtimeConfig.public.isHero);
+
+const getComponent = (name: string) => {
+  if (name === 'NewsletterSubscribe') return resolveComponent('NewsletterSubscribe');
+  if (name === 'UiTextCard') return resolveComponent('UiTextCard');
+  if (name === 'UiImageText') return resolveComponent('UiImageText');
+  if (name === 'ProductRecommendedProducts') return resolveComponent('ProductRecommendedProducts');
+  if (name === 'UiHeroCarousel' || name === 'UiBlazeCarousel') {
+    return isHero.value ? resolveComponent('UiHeroCarousel') : resolveComponent('UiBlazeCarousel');
+  }
+};
+
+onMounted(() => {
+  isEditingEnabled.value = false;
+});
+
+fetchPageTemplate();
 </script>

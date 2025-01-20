@@ -1,5 +1,5 @@
-import { type AggregatedCountries } from '@plentymarkets/shop-api';
-import { type UseAggregatedCountriesReturn, UseAggregatedCountriesState, type FetchAggregatedCountries } from './types';
+import type { AggregatedCountries } from '@plentymarkets/shop-api';
+import type { UseAggregatedCountriesState, UseAggregatedCountriesReturn, FetchAggregatedCountries } from './types';
 
 /**
  * @description Composable for getting `AggregatedCountries`:
@@ -16,6 +16,7 @@ import { type UseAggregatedCountriesReturn, UseAggregatedCountriesState, type Fe
  *  fetchAggregatedCountries,
  *  useGeoRegulatedCountries,
  *  billingCountries,
+ *  localeCountryName(countryId),
  * } = useAggregatedCountries();
  * ```
  */
@@ -53,14 +54,22 @@ export const useAggregatedCountries: UseAggregatedCountriesReturn = () => {
     );
 
     return [...uniqueCountries.values()].sort((firstCountry, secondCountry) =>
-      firstCountry.currLangName.localeCompare(secondCountry.currLangName, useI18n().locale.value),
+      firstCountry.currLangName.localeCompare(secondCountry.currLangName, useNuxtApp().$i18n.locale.value),
     );
   });
+
+  const localeCountryName = (countryId: string) => {
+    const id = Number.parseInt(countryId);
+
+    if (Number.isNaN(id)) return '';
+    return billingCountries.value.find((country) => country.id === id)?.currLangName ?? '';
+  };
 
   return {
     fetchAggregatedCountries,
     useGeoRegulatedCountries,
     billingCountries,
+    localeCountryName,
     ...toRefs(state.value),
   };
 };

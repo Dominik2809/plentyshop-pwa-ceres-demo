@@ -1,5 +1,5 @@
 import { cartGetters, orderGetters } from '@plentymarkets/shop-api';
-import { ApplepayType, ConfigResponse } from '~/components/PayPal/types';
+import type { ApplepayType, ConfigResponse } from '~/components/PayPal/types';
 
 const loadExternalScript = async () => {
   return new Promise((resolve, reject) => {
@@ -30,7 +30,7 @@ export const useApplePay = () => {
     const { data: cart } = useCart();
     const currency = computed(() => cartGetters.getCurrency(cart.value) || (useAppConfig().fallbackCurrency as string));
     const { getScript } = usePayPal();
-    const script = await getScript(currency.value);
+    const script = await getScript(currency.value, true);
 
     if (!script) return false;
 
@@ -96,7 +96,7 @@ export const useApplePay = () => {
 
           const order = await createOrder({
             paymentId: cart.value.methodOfPaymentId,
-            shippingPrivacyHintAccepted: shippingPrivacyAgreement.value,
+            additionalInformation: { shippingPrivacyHintAccepted: shippingPrivacyAgreement.value },
           });
           if (!order || !order.order || !order.order.id) {
             showErrorNotification($i18n.t('storefrontError.order.createFailed'));
@@ -120,7 +120,7 @@ export const useApplePay = () => {
           });
 
           await executeOrder({
-            mode: 'paypal',
+            mode: 'PAYPAL_APPLE_PAY',
             plentyOrderId: Number.parseInt(orderGetters.getId(order)),
             paypalTransactionId: transaction.id,
           });
@@ -147,20 +147,24 @@ export const useApplePay = () => {
   };
 
   const checkIsEligible = async () => {
-    if (
-      (await initialize()) &&
-      typeof ApplePaySession !== 'undefined' &&
-      state.value.script &&
-      ApplePaySession &&
-      ApplePaySession.canMakePayments() &&
-      state.value.config.isEligible
-    ) {
-      await useSdk().plentysystems.doHandleAllowPaymentApplePay({
-        canMakePayments: true,
-      });
-      return true;
+    try {
+      if (
+        (await initialize()) &&
+        typeof ApplePaySession !== 'undefined' &&
+        state.value.script &&
+        ApplePaySession &&
+        ApplePaySession.canMakePayments() &&
+        state.value.config.isEligible
+      ) {
+        await useSdk().plentysystems.doHandleAllowPaymentApplePay({
+          canMakePayments: true,
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   return {
