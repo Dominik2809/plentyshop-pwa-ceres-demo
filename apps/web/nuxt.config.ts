@@ -79,6 +79,10 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     '@vue-storefront/nuxt',
   ],
+  vitalizer: {
+    disableStylesheets: 'entry',
+    disablePrefetchLinks: true,
+  },
   vsf: {
     middleware: {
       apiUrl: validateApiUrl(process.env.API_URL) ?? 'http://localhost:8181',
