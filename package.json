@@ -66,6 +66,7 @@
     "lint-staged": "^14.0.1",
     "nuxt": "^3.13.2",
     "nuxt-viewport": "^2.1.5",
+    "nuxt-vitalizer": "0.10.0",
     "playwright-core": "^1.45.1",
     "prettier": "^3.3.2",
     "rimraf": "^5.0.7",
