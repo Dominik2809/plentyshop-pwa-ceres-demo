@@ -1,5 +1,5 @@
 <template>
-  <div class="blaze-slider relative">
+  <div class="blaze-slider relative overflow-hidden">
     <div class="blaze-container">
       <div class="blaze-track-container">
         <div class="blaze-track flex gap-4 w-full">
@@ -12,15 +12,21 @@
           </div>
         </div>
       </div>
-
-      <button v-if="!isMobile" class="blaze-prev absolute left-[-18px] top-1/2 -translate-y-1/2 text-white">
-        <svg class="w-20 h-20" fill="none" :stroke="generalTextColor" stroke-width="2" viewBox="0 0 24 24">
+      <button
+        v-if="!isMobile"
+        aria-label="Previous"
+        class="blaze-prev testmobile absolute left-[-1px] top-1/2 -translate-y-1/2 text-white"
+      >
+        <svg class="w-14 h-14" fill="none" :stroke="generalTextColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
-
-      <button v-if="!isMobile" class="blaze-next absolute right-[-18px] top-1/2 -translate-y-1/2 text-white">
-        <svg class="w-20 h-20" fill="none" :stroke="generalTextColor" stroke-width="2" viewBox="0 0 24 24">
+      <button
+        v-if="!isMobile"
+        aria-label="Next"
+        class="blaze-next button2 absolute right-[-1px] top-1/2 -translate-y-1/2 text-white"
+      >
+        <svg class="w-14 h-14" fill="none" :stroke="generalTextColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -36,24 +42,31 @@
 import BlazeSlider from 'blaze-slider';
 import 'blaze-slider/dist/blaze.css';
 import type { BannerProps } from '../Banner/types';
+import type { SlideControls } from '~/composables/useHomepage/types';
 
-const { bannerItems } = defineProps<{ bannerItems: BannerProps[] }>();
+const { bannerItems, controls } = defineProps<{ bannerItems: BannerProps[]; controls: SlideControls }>();
 const generalTextColor = ref('inherit');
 
 const viewport = useViewport();
 const isMobile = computed(() => viewport.isLessThan('lg'));
 
-generalTextColor.value = bannerItems[0]?.text?.color ?? 'inherit';
+generalTextColor.value = controls?.color ?? 'inherit';
 
 onMounted(() => {
-  const el = document.querySelector('.blaze-slider');
-  if (el) {
+  document.querySelectorAll('.blaze-slider').forEach((el) => {
+    const sliderElement = el as HTMLElement & { _blazeInitialized?: boolean };
+    if (sliderElement._blazeInitialized) {
+      return;
+    }
+
     new BlazeSlider(el as HTMLElement, {
       all: {
         slidesToShow: 1,
       },
     });
-  }
+
+    sliderElement._blazeInitialized = true;
+  });
 });
 </script>
 
