@@ -15,7 +15,7 @@
     />
 
     <div class="w-100 bg-white" :class="{ 'lg:w-3/4': drawerOpen }">
-      <Body class="font-body bg-editor-body-bg" :class="bodyClass" :style="currentFont" />
+      <Body class="font-body bg-editor-body-bg" :class="bodyClass" :style="currentFont" data-testid="body" />
       <UiNotifications />
       <VitePwaManifest v-if="$pwa?.isPWAInstalled" />
       <NuxtLoadingIndicator color="repeating-linear-gradient(to right, #008ebd 0%,#80dfff 50%,#e0f7ff 100%)" />
@@ -27,6 +27,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Locale } from '#i18n';
+
 const { $pwa } = useNuxtApp();
 const bodyClass = ref('');
 const { getCategoryTree } = useCategoryTree();
@@ -59,7 +61,7 @@ onNuxtReady(async () => {
 
 watch(
   () => locale.value,
-  async (locale: string) => {
+  async (locale: Locale) => {
     setVsfLocale(locale);
     await getCategoryTree();
   },
